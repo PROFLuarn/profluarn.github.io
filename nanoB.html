@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欒式模型生成器</title>
+    <title>Stylish Model Generator</title>
     <link rel="icon" type="image/x-icon" href="/pic/favicon.ico">
     <style>
         * {
@@ -14,7 +14,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -24,12 +24,12 @@
             margin: 0 auto;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(255, 107, 157, 0.2);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -67,7 +67,7 @@
         }
 
         .file-upload-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
             color: white;
             padding: 15px 30px;
             border: none;
@@ -75,20 +75,21 @@
             font-size: 1.1em;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 5px 15px rgba(255, 107, 157, 0.3);
         }
 
         .file-upload-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
         }
 
         .file-info {
             margin-top: 15px;
             padding: 10px;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #ffeef4 0%, #ffe0eb 100%);
             border-radius: 10px;
             display: none;
+            border: 2px solid #ffcce0;
         }
 
         .preview-section {
@@ -99,12 +100,12 @@
             max-width: 100%;
             max-height: 300px;
             border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(255, 107, 157, 0.2);
             display: none;
         }
 
         .generate-btn {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #ff9ac1 0%, #e91e63 100%);
             color: white;
             padding: 15px 40px;
             border: none;
@@ -113,13 +114,13 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin: 20px 10px;
-            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.3);
+            box-shadow: 0 5px 15px rgba(255, 154, 193, 0.3);
             display: none;
         }
 
         .generate-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(17, 153, 142, 0.4);
+            box-shadow: 0 8px 25px rgba(255, 154, 193, 0.4);
         }
 
         .generate-btn:disabled {
@@ -138,8 +139,8 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #667eea;
+            border: 5px solid #ffcce0;
+            border-top: 5px solid #ff6b9d;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
@@ -158,7 +159,7 @@
         .result-title {
             font-size: 1.5em;
             margin-bottom: 20px;
-            color: #333;
+            color: #c44569;
             text-align: center;
         }
 
@@ -175,7 +176,7 @@
 
         .image-container h3 {
             margin-bottom: 15px;
-            color: #555;
+            color: #c44569;
             font-size: 1.2em;
         }
 
@@ -183,7 +184,7 @@
             max-width: 100%;
             height: auto;
             border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(255, 107, 157, 0.2);
             transition: transform 0.3s ease;
         }
 
@@ -192,7 +193,7 @@
         }
 
         .download-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
             color: white;
             padding: 12px 25px;
             border: none;
@@ -201,44 +202,44 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-top: 15px;
-            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.3);
+            box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
         }
 
         .download-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4);
         }
 
         .error-message {
-            background: #ffe6e6;
+            background: linear-gradient(135deg, #ffe6e6, #ffcccc);
             color: #d63031;
             padding: 15px;
             border-radius: 10px;
             margin: 20px 0;
-            border-left: 4px solid #d63031;
+            border-left: 4px solid #ff6b6b;
             display: none;
         }
 
         .success-message {
-            background: #e6ffe6;
+            background: linear-gradient(135deg, #e6ffe6, #ccffcc);
             color: #00b894;
             padding: 15px;
             border-radius: 10px;
             margin: 20px 0;
-            border-left: 4px solid #00b894;
+            border-left: 4px solid #00d084;
             display: none;
         }
 
         .requirements {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #ffeef4 0%, #ffe0eb 100%);
             padding: 20px;
             border-radius: 15px;
             margin: 30px 0;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #ff6b9d;
         }
 
         .requirements h3 {
-            color: #333;
+            color: #c44569;
             margin-bottom: 15px;
             font-size: 1.3em;
         }
@@ -276,19 +277,19 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎨欒式模型生成器</h1>
-            <p>上傳您的照片，我用 n8n 程式幫你製作寫實風格模型</p>
+            <h1>🎨 Stylish Model Generator</h1>
+            <p>Upload your photo, and I'll use n8n to create realistic style models for you</p>
         </div>
 
         <div class="content">
             <div class="requirements">
-                <h3>📋 使用說明</h3>
+                <h3>📋 Usage Instructions</h3>
                 <ul>
-                    <li>支援格式：PNG、JPG/JPEG</li>
-                    <li>檔案大小：小於 8MB</li>
-                    <li>建議上傳清晰的人物照片以獲得最佳效果</li>
-                    <li>處理時間約 3-8 分鐘，請耐心等候</li>
-                    <li>如果沒有成功，再試一次應該就可以</li>
+                    <li>Supported formats: PNG, JPG/JPEG</li>
+                    <li>File size: Less than 8MB</li>
+                    <li>Recommend uploading clear portrait photos for best results</li>
+                    <li>Processing time approximately 3-8 minutes, please be patient</li>
+                    <li>If unsuccessful, try again and it should work</li>
                 </ul>
             </div>
 
@@ -296,40 +297,40 @@
                 <div class="file-upload-wrapper">
                     <input type="file" id="imageFile" class="file-upload" accept=".png,.jpg,.jpeg" />
                     <button class="file-upload-btn" onclick="document.getElementById('imageFile').click()">
-                        📁 選擇圖片
+                        📁 Select Image
                     </button>
                 </div>
                 <div class="file-info" id="fileInfo"></div>
             </div>
 
             <div class="preview-section">
-                <img id="imagePreview" class="image-preview" alt="圖片預覽" />
+                <img id="imagePreview" class="image-preview" alt="Image Preview" />
                 <div style="text-align: center;">
-                    <button id="generateBtn" class="generate-btn">🚀 開始生成模型手辦</button>
+                    <button id="generateBtn" class="generate-btn">🚀 Start Generating Model Figure</button>
                 </div>
             </div>
 
             <div class="loading" id="loadingSection">
                 <div class="spinner"></div>
-                <h3>AI 正在製作您的專屬模型手辦...</h3>
-                <p>請稍候，這個過程需要 3-8 分鐘</p>
+                <h3>AI is creating your exclusive model figure...</h3>
+                <p>Please wait, this process takes 3-8 minutes</p>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
 
             <div class="result-section" id="resultSection">
-                <h2 class="result-title">🎉 您的模型手辦已完成！</h2>
+                <h2 class="result-title">🎉 Your Model Figure is Complete!</h2>
                 <div class="result-images">
                     <div class="image-container">
-                        <h3>📷 原始圖片</h3>
-                        <img id="originalImage" class="result-image" alt="原始圖片" />
-                        <button class="download-btn" onclick="downloadImage('original')">下載原圖</button>
+                        <h3>📷 Original Image</h3>
+                        <img id="originalImage" class="result-image" alt="Original Image" />
+                        <button class="download-btn" onclick="downloadImage('original')">Download Original</button>
                     </div>
                     <div class="image-container">
-                        <h3>🏆 生成的模型手辦</h3>
-                        <img id="generatedImage" class="result-image" alt="生成的模型手辦" />
-                        <button class="download-btn" onclick="downloadImage('generated')">長按圖下載手辦圖</button>
+                        <h3>🏆 Generated Model Figure</h3>
+                        <img id="generatedImage" class="result-image" alt="Generated Model Figure" />
+                        <button class="download-btn" onclick="downloadImage('generated')">Long Press to Download Figure</button>
                     </div>
                 </div>
             </div>
@@ -337,43 +338,43 @@
     </div>
 
     <script>
-        // 替換為您的 n8n webhook URL (使用新的 webhook 路徑)
+        // Replace with your n8n webhook URL (using new webhook path)
         const WEBHOOK_URL = 'https://luarn.qzz.io/webhook/figurine-generator';
         
         let selectedFile = null;
         let originalImageData = null;
         let generatedImageData = null;
 
-        // 檔案選擇處理
+        // File selection handling
         document.getElementById('imageFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            // 檢查檔案類型
+            // Check file type
             if (!file.type.match(/^image\/(png|jpe?g)$/)) {
-                showError('請選擇 PNG 或 JPG 格式的圖片');
+                showError('Please select PNG or JPG format images');
                 return;
             }
 
-            // 檢查檔案大小 (8MB = 8 * 1024 * 1024 bytes)
+            // Check file size (8MB = 8 * 1024 * 1024 bytes)
             if (file.size > 8 * 1024 * 1024) {
-                showError('檔案大小不能超過 8MB');
+                showError('File size cannot exceed 8MB');
                 return;
             }
 
             selectedFile = file;
 
-            // 顯示檔案資訊
+            // Display file information
             const fileInfo = document.getElementById('fileInfo');
             const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
             fileInfo.innerHTML = `
-                <strong>📄 已選擇：</strong>${file.name}<br>
-                <strong>📊 大小：</strong>${fileSizeMB} MB<br>
-                <strong>🔧 格式：</strong>${file.type}
+                <strong>📄 Selected:</strong> ${file.name}<br>
+                <strong>📊 Size:</strong> ${fileSizeMB} MB<br>
+                <strong>🔧 Format:</strong> ${file.type}
             `;
             fileInfo.style.display = 'block';
 
-            // 顯示圖片預覽
+            // Display image preview
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('imagePreview');
@@ -381,20 +382,20 @@
                 preview.style.display = 'block';
                 originalImageData = e.target.result;
 
-                // 顯示生成按鈕
+                // Show generate button
                 document.getElementById('generateBtn').style.display = 'inline-block';
             };
             reader.readAsDataURL(file);
 
-            // 隱藏之前的結果
+            // Hide previous results
             hideResult();
             hideError();
         });
 
-        // 生成按鈕點擊處理
+        // Generate button click handling
         document.getElementById('generateBtn').addEventListener('click', async function() {
             if (!selectedFile) {
-                showError('請先選擇一張圖片');
+                showError('Please select an image first');
                 return;
             }
 
@@ -403,11 +404,11 @@
             hideResult();
 
             try {
-                // 準備 FormData
+                // Prepare FormData
                 const formData = new FormData();
                 formData.append('image', selectedFile);
 
-                // 發送到 n8n webhook
+                // Send to n8n webhook
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
                     body: formData
@@ -419,18 +420,18 @@
 
                 const result = await response.json();
                 
-                // 處理結果
+                // Handle results
                 if (result.success && result.generatedImage) {
                     generatedImageData = result.generatedImage;
                     showResult();
-                    showSuccess('🎉 模型手辦生成成功！');
+                    showSuccess('🎉 Model figure generated successfully!');
                 } else {
-                    throw new Error(result.message || '生成失敗，請重試');
+                    throw new Error(result.message || 'Generation failed, please retry');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                showError(`❌ 生成失敗：${error.message}`);
+                showError(`❌ Generation failed: ${error.message}`);
             } finally {
                 hideLoading();
             }
@@ -450,7 +451,7 @@
             const errorElement = document.getElementById('errorMessage');
             errorElement.textContent = message;
             errorElement.style.display = 'block';
-            setTimeout(hideError, 5000); // 5秒後自動隱藏
+            setTimeout(hideError, 5000); // Auto hide after 5 seconds
         }
 
         function hideError() {
@@ -463,7 +464,7 @@
             successElement.style.display = 'block';
             setTimeout(() => {
                 successElement.style.display = 'none';
-            }, 3000); // 3秒後自動隱藏
+            }, 3000); // Auto hide after 3 seconds
         }
 
         function showResult() {
@@ -489,7 +490,7 @@
 
             if (!imageData) return;
 
-            // 創建下載連結
+            // Create download link
             const link = document.createElement('a');
             link.download = filename;
             link.href = imageData;
@@ -498,12 +499,12 @@
             document.body.removeChild(link);
         }
 
-        // 拖拽上傳功能
+        // Drag and drop functionality
         const uploadSection = document.querySelector('.upload-section');
 
         uploadSection.addEventListener('dragover', function(e) {
             e.preventDefault();
-            uploadSection.style.background = '#f0f8ff';
+            uploadSection.style.background = '#fff0f5';
         });
 
         uploadSection.addEventListener('dragleave', function(e) {
