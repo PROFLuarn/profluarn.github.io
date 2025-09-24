@@ -1,34 +1,143 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人工智慧課程 - 學生個人網站</title>
+    <title>AI Course - Student Personal Websites</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/pic/favicon.ico">
     <style>
         body {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 50%, #f48fb1 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 動態背景圖樣 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(240, 98, 146, 0.1) 0%, transparent 50%);
+            animation: float 15s ease-in-out infinite;
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 60% 70%, rgba(233, 30, 99, 0.05) 0%, transparent 60%),
+                radial-gradient(circle at 90% 10%, rgba(255, 182, 193, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 10% 90%, rgba(255, 192, 203, 0.06) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite reverse;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) translateX(0px) scale(1);
+            }
+            25% {
+                transform: translateY(-20px) translateX(10px) scale(1.02);
+            }
+            50% {
+                transform: translateY(10px) translateX(-15px) scale(0.98);
+            }
+            75% {
+                transform: translateY(-15px) translateX(5px) scale(1.01);
+            }
+        }
+
+        /* 粉色調裝飾元素 */
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .heart {
+            position: absolute;
+            color: rgba(233, 30, 99, 0.1);
+            font-size: 20px;
+            animation: floatHearts 12s infinite linear;
+        }
+
+        @keyframes floatHearts {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-20px) rotate(360deg);
+                opacity: 0;
+            }
         }
         
         .main-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.15);
+            backdrop-filter: blur(15px);
             margin: 20px auto;
             max-width: 1200px;
+            position: relative;
+            z-index: 1;
         }
         
         .header {
-            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
             color: white;
             padding: 40px;
             border-radius: 20px 20px 0 0;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: headerGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes headerGlow {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
         }
         
         .header h1 {
@@ -36,18 +145,22 @@
             font-weight: 700;
             margin-bottom: 10px;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
         }
         
         .header p {
             font-size: 1.2rem;
             opacity: 0.9;
             margin: 0;
+            position: relative;
+            z-index: 1;
         }
         
         .stats-section {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
             padding: 20px;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #f48fb1;
         }
         
         .stat-card {
@@ -55,19 +168,23 @@
             border-radius: 15px;
             padding: 20px;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid rgba(233, 30, 99, 0.1);
         }
         
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.2);
+            border-color: rgba(233, 30, 99, 0.3);
         }
         
         .stat-number {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #2196f3;
+            color: #e91e63;
             margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(233, 30, 99, 0.1);
         }
         
         .stat-label {
@@ -88,7 +205,7 @@
         }
         
         .search-input {
-            border: 2px solid #e3f2fd;
+            border: 2px solid #fce4ec;
             border-radius: 50px;
             padding: 15px 50px 15px 20px;
             font-size: 1.1rem;
@@ -97,8 +214,8 @@
         }
         
         .search-input:focus {
-            border-color: #2196f3;
-            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+            border-color: #e91e63;
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
             outline: none;
         }
         
@@ -107,7 +224,7 @@
             right: 20px;
             top: 50%;
             transform: translateY(-50%);
-            color: #2196f3;
+            color: #e91e63;
         }
         
         .student-grid {
@@ -121,16 +238,34 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(233, 30, 99, 0.1);
             transition: all 0.3s ease;
             border: 2px solid transparent;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .student-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(233, 30, 99, 0.03), transparent);
+            transition: transform 0.6s ease;
+            transform: translateX(-100%) translateY(-100%);
+        }
+
+        .student-card:hover::before {
+            transform: translateX(100%) translateY(100%);
         }
         
         .student-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-            border-color: #2196f3;
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(233, 30, 99, 0.2);
+            border-color: #e91e63;
         }
         
         .student-photo {
@@ -139,45 +274,53 @@
             border-radius: 50%;
             object-fit: cover;
             margin: 0 auto 20px;
-            border: 4px solid #e3f2fd;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 4px solid #fce4ec;
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.15);
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
         
         .student-card:hover .student-photo {
-            border-color: #2196f3;
+            border-color: #e91e63;
             transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.25);
         }
         
         .photo-placeholder {
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 20px;
-            border: 4px solid #e3f2fd;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 4px solid #fce4ec;
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.15);
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
         
         .photo-placeholder i {
             font-size: 2.5rem;
-            color: #2196f3;
+            color: #e91e63;
         }
         
         .student-card:hover .photo-placeholder {
-            border-color: #2196f3;
+            border-color: #e91e63;
             transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.25);
         }
         
         .student-name {
             font-size: 1.3rem;
             font-weight: 600;
-            color: #1976d2;
+            color: #ad1457;
             margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
         }
         
         .student-id {
@@ -185,16 +328,18 @@
             font-size: 0.95rem;
             margin-bottom: 15px;
             font-family: 'Courier New', monospace;
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
             padding: 5px 10px;
             border-radius: 20px;
             display: inline-block;
+            position: relative;
+            z-index: 1;
         }
         
         .website-link {
             display: inline-flex;
             align-items: center;
-            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
             color: white;
             text-decoration: none;
             padding: 12px 20px;
@@ -202,12 +347,31 @@
             font-weight: 500;
             transition: all 0.3s ease;
             margin-top: 10px;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .website-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .website-link:hover::before {
+            left: 100%;
         }
         
         .website-link:hover {
-            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            background: linear-gradient(135deg, #ad1457 0%, #880e4f 100%);
             color: white;
             transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
         }
         
         .website-link i {
@@ -222,12 +386,12 @@
         
         .no-results i {
             font-size: 4rem;
-            color: #ddd;
+            color: #f8bbd9;
             margin-bottom: 20px;
         }
         
         .footer {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
             text-align: center;
             padding: 20px;
             border-radius: 0 0 20px 20px;
@@ -255,12 +419,15 @@
     </style>
 </head>
 <body>
+    <!-- 動態愛心背景 -->
+    <div class="floating-hearts" id="floatingHearts"></div>
+
     <div class="container-fluid">
         <div class="main-container">
             <!-- Header -->
             <div class="header">
-                <h1><i class="fas fa-robot"></i> 人工智慧課程</h1>
-                <p>學生個人網站作品集</p>
+                <h1><i class="fas fa-robot"></i> AI Course</h1>
+                <p>Student Personal Website Portfolio</p>
             </div>
             
             <!-- Statistics -->
@@ -268,20 +435,20 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <div class="stat-card">
-                            <div class="stat-number" id="totalStudents">56</div>
-                            <div class="stat-label">總學生數</div>
+                            <div class="stat-number" id="totalStudents">8</div>
+                            <div class="stat-label">Total Students</div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="stat-card">
-                            <div class="stat-number" id="activeWebsites">56</div>
-                            <div class="stat-label">個人網站</div>
+                            <div class="stat-number" id="activeWebsites">8</div>
+                            <div class="stat-label">Personal Websites</div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="stat-card">
-                            <div class="stat-number" id="displayedCount">56</div>
-                            <div class="stat-label">顯示中</div>
+                            <div class="stat-number" id="displayedCount">8</div>
+                            <div class="stat-label">Currently Shown</div>
                         </div>
                     </div>
                 </div>
@@ -290,7 +457,7 @@
             <!-- Search -->
             <div class="search-section">
                 <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="搜尋學生姓名或學號...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search student name or ID...">
                     <i class="fas fa-search search-icon"></i>
                 </div>
             </div>
@@ -303,97 +470,58 @@
             <!-- No Results -->
             <div class="no-results" id="noResults" style="display: none;">
                 <i class="fas fa-search"></i>
-                <h3>找不到符合條件的學生</h3>
-                <p>請嘗試其他搜尋關鍵字</p>
+                <h3>No students found matching your criteria</h3>
+                <p>Please try different search keywords</p>
             </div>
             
             <!-- Footer -->
             <div class="footer">
-                <p><i class="fas fa-graduation-cap"></i> 更新時間：2025年7月22日 | 共 56 位學生 (已去除重複提交)</p>
+                <p><i class="fas fa-graduation-cap"></i> Last Updated: July 22, 2025 | Total 8 Students (Duplicates Removed)</p>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Student data (去除重複項目)
+        // Student data 
         const students = [
-            { name: "欒斌", studentId: "M1102354", website: "https://luarnai.github.io/" },
-            { name: "謝承穎", studentId: "M11308910", website: "https://snowrover.github.io/" },
-            { name: "謝同賀", studentId: "M11316116", website: "https://daniohsieh.github.io/" },
-            { name: "黃雅郁", studentId: "M11316208", website: "https://jokumaanna.github.io/" },
-            { name: "蔡佩修", studentId: "M11309924", website: "https://adeletsai.github.io/" },
-            { name: "張德佑", studentId: "M11209916", website: "https://deryuchang.github.io/" },
-            { name: "洪淑娟", studentId: "Ｍ11308928", website: "https://m11308928.github.io/" },
-            { name: "陳雅琳", studentId: "M11208901", website: "https://gcyalin.github.io/" },
-            { name: "魏菁湄", studentId: "M11209922", website: "https://weichingmei.github.io" },
-            { name: "鐘惠英", studentId: "M11209901", website: "https://tiffanychung-ntust.github.io" },
-            { name: "林昆毅", studentId: "M11318922", website: "https://warren6648.github.io/" },
-            { name: "賴恆暉", studentId: "D11316001", website: "https://ccppotter.github.io/" },
-            { name: "歐俊聰", studentId: "M11316220", website: "https://jasonou353637.github.io/" },
-            { name: "陳惠文", studentId: "M11316219", website: "https://ichen42025.github.io/" },
-            { name: "林慧卿", studentId: "M11309929", website: "https://irenelin888.github.io" },
-            { name: "林邑謙", studentId: "M11301915", website: "https://justin-1000.github.io/" },
-            { name: "柯學騰", studentId: "M11316108", website: "https://emmettko.github.io/" },
-            { name: "邱進源", studentId: "M11309910", website: "https://ctci41631.github.io/" },
-            { name: "周旺瑩", studentId: "d11216001", website: "https://gregchou-wy.github.io/" },
-            { name: "陳怡彤", studentId: "M11216108", website: "https://felicityceline.github.io/" },
-            { name: "簡翔泰", studentId: "M11309915", website: "https://htchien.github.io" },
-            { name: "李民立", studentId: "M11316102", website: "https://CTCI31417.github.io" },
-            { name: "韓玉森", studentId: "M11209923", website: "https://hansonatntust.github.io" },
-            { name: "蔡敬宜", studentId: "M11308909", website: "https://jtsai588.github.io/" },
-            { name: "郭禹瑄", studentId: "M11316222", website: "https://ingeniouskiki.github.io/" },
-            { name: "梁珈嘉", studentId: "M11116106", website: "https://jiajiabbeauty.github.io/" },
-            { name: "張國瑋", studentId: "M11308908", website: "https://kuowei45615.github.io/" },
-            { name: "曹永麟", studentId: "M11316204", website: "https://alberttsao.github.io/" },
-            { name: "王敏而", studentId: "M11308919", website: "https://m11308919wang.github.io/" },
-            { name: "朱怡珊", studentId: "M11316223", website: "https://hualinepig.github.io/" },
-            { name: "鄭士漢", studentId: "M11208914", website: "https://hanscheng181.github.io/" },
-            { name: "蔡宜秀", studentId: "D11316002", website: "https://ellentsaitw.github.io/" },
-            { name: "施俞安", studentId: "M11301926", website: "https://devinshih2025.github.io/" },
-            { name: "黃郁晴", studentId: "M11116216", website: "https://ntustangela.github.io/" },
-            { name: "洪淑芳", studentId: "M11308914", website: "https://shufanghung.github.io/" },
-            { name: "練家豪", studentId: "Ｍ11308918", website: "https://dearethan.github.io/" },
-            { name: "葉雲雲", studentId: "M11316209", website: "https://yunihouse.github.io/" },
-            { name: "袁詩琪", studentId: "M11316203", website: "https://yuankitty.github.io/" },
-            { name: "鍾錦琳", studentId: "M11309919", website: "https://kentchung66.github.io/" },
-            { name: "謝錦枝", studentId: "M11008923", website: "https://aasweet.github.io/" },
-            { name: "黃志源", studentId: "m11308921", website: "https://dollars2343.github.io/" },
-            { name: "林金弘", studentId: "M11308925", website: "https://m11308925.github.io" },
-            { name: "阮于齡", studentId: "M11109918", website: "https://eunice918.github.io/" },
-            { name: "張綾芝", studentId: "M11318910", website: "https://cherrychang0106.github.io/" },
-            { name: "游秀春", studentId: "M11318918", website: "https://lydiayu2025.github.io/" },
-            { name: "余亦涵", studentId: "M11308924", website: "https://eva81118vava.github.io/" },
-            { name: "楊致中", studentId: "M11308905", website: "https://tvbschung.github.io/" },
-            { name: "楊宗霖", studentId: "M11301934", website: "https://robert81817-git.github.io/" },
-            { name: "李國源", studentId: "m11209925", website: "https://m11209925.github.io" },
-            { name: "吳峰期", studentId: "M11309904", website: "https://jackywu319.github.io/" },
-            { name: "黃宇榮", studentId: "M11316205", website: "https://royhuang12.github.io/" },
-            { name: "朱銘隆", studentId: "M11209917", website: "https://ntustbadbadtzmaru.github.io/" },
-            { name: "沈昌宏", studentId: "M11309903", website: "https://kbmissam.github.io/" },
-            { name: "巫品萱", studentId: "M11108015", website: "https://fs-407011092.github.io/" },
-            { name: "廖婉鈞", studentId: "M11301908", website: "https://ffionaliao.github.io/" },
-            { name: "陳禾蓁", studentId: "M11301917", website: "https://tina1142.github.io/" }
+            { name: "Lu Arn", studentId: "M1102354", website: "https://luarnai.github.io/" },
+            { name: "Hsieh Cheng Mu", studentId: "M11308910", website: "https://snowrover.github.io/" },
+            { name: "Hsieh Tung Ho", studentId: "M11316116", website: "https://daniohsieh.github.io/" },
+            { name: "Huang Ya Chun", studentId: "M11316208", website: "https://jokumaanna.github.io/" },
+            { name: "Tsai Pei Hsiu", studentId: "M11309924", website: "https://adeletsai.github.io/" },
+            { name: "Chang Te Yu", studentId: "M11209916", website: "https://deryuchang.github.io/" },
+            { name: "Hong Shu Ning", studentId: "M11308928", website: "https://m11308928.github.io/" },
+            { name: "Chen Ya Lin", studentId: "M11208901", website: "https://gcyalin.github.io/" }
         ];
 
         let filteredStudents = [...students];
 
-        function getPhotoUrl(website, studentName) {
-            // 特殊情況處理
-            if (studentName === "韓玉森") {
-                const baseUrl = website.endsWith('/') ? website : website + '/';
-                return baseUrl + 'pic/hanson.png';
-            }
-            if (studentName === "蔡宜秀") {
-                const baseUrl = website.endsWith('/') ? website : website + '/';
-                return baseUrl + 'pic/Ellenpic.jpg';
-            }
-            if (studentName === "練家豪") {
-                // 使用 GitHub avatar 代替
-                return 'https://avatars.githubusercontent.com/u/574818?v=4';
-            }
+        // 創建浮動愛心效果
+        function createFloatingHearts() {
+            const container = document.getElementById('floatingHearts');
+            const hearts = ['♥', '♡', '💖', '💕', '💗'];
             
-            // 一般情況：使用 mypic.jpg
+            setInterval(() => {
+                if (container.children.length < 15) {
+                    const heart = document.createElement('div');
+                    heart.className = 'heart';
+                    heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                    heart.style.left = Math.random() * 100 + '%';
+                    heart.style.animationDuration = (Math.random() * 3 + 10) + 's';
+                    heart.style.fontSize = (Math.random() * 10 + 15) + 'px';
+                    container.appendChild(heart);
+                    
+                    setTimeout(() => {
+                        if (heart.parentNode) {
+                            heart.parentNode.removeChild(heart);
+                        }
+                    }, 13000);
+                }
+            }, 2000);
+        }
+
+        function getPhotoUrl(website, studentName) {
             const baseUrl = website.endsWith('/') ? website : website + '/';
             return baseUrl + 'pic/mypic.jpg';
         }
@@ -424,7 +552,7 @@
                         <div class="student-id">${student.studentId}</div>
                         <a href="${student.website}" target="_blank" class="website-link">
                             <i class="fas fa-external-link-alt"></i>
-                            訪問個人網站
+                            Visit Personal Website
                         </a>
                     </div>
                 `;
@@ -449,6 +577,9 @@
 
         // Initial render
         renderStudents(students);
+
+        // Start floating hearts animation
+        createFloatingHearts();
 
         // Add smooth scroll animation for cards appearing
         const observer = new IntersectionObserver((entries) => {

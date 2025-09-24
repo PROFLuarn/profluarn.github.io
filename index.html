@@ -17,15 +17,18 @@
             position: relative;
             padding-left: 1.5rem;
             font-weight: bold;
+            color: #820029 !important; 
+            text-shadow: 0 2px 4px rgba(255,255,255,2); 
         }
         
         .title-line:before {
             content: "•";
-            color: #fff;
+            color:  #820029; 
             font-size: 1.2em;
             position: absolute;
             left: 0;
             top: 0;
+            text-shadow: 0 2px 4px rgba(255,255,255,2);
         }
         
         .title-line:last-child {
@@ -86,16 +89,24 @@
                         <strong>Contact Email:</strong>
                         <a href="mailto:" class="text-white" id="email"></a>
                     </div>
+                    <div class="mb-3">
+                        <strong>LinkedIn:</strong>
+                        <a href="" target="_blank" class="text-white" id="linkedin">
+                            <i class="fab fa-linkedin me-1"></i>
+                            <span id="linkedin-text"></span>
+                            <i class="fas fa-external-link-alt ms-1"></i>
+                        </a>
+                    </div>
                     <div class="mb-4">
-                        <strong>2025 Summer Student Works Link:</strong>
-                        <a href="https://luarnai.github.io/student_websites.html" target="_blank" class="text-white">
-                            https://luarnai.github.io/student_websites.html
+                        <strong>2025 Pforzheim Student Works Link:</strong>
+                        <a href="https://PROFluarn.github.io/student_websites.html" target="_blank" class="text-white">
+                            https://PROFluarn.github.io/student_websites.html
                             <i class="fas fa-external-link-alt ms-1"></i>
                         </a>
                     </div>
                 </div>
                 <div class="col-lg-6 text-center fade-in">
-                    <img src="pic/mypic.png" alt="Dr. Pin Luarn" class="profile-img">
+                    <img src="pic/mypic.png" alt="mypic" class="profile-img">
                 </div>
             </div>
         </div>
@@ -234,17 +245,14 @@
             document.getElementById('education').textContent = profileData.education;
             document.getElementById('email').textContent = profileData.email;
             document.getElementById('email').href = `mailto:${profileData.email}`;
-
-            // Update about section - combine about1, about2, about3, about4
+            document.getElementById('linkedin').href = profileData.linkedin;
+            document.getElementById('linkedin-text').textContent = profileData.linkedin;
             const aboutText = [profileData.about1, profileData.about2, profileData.about3, profileData.about4]
                 .filter(text => text && text.trim()) // Remove empty parts
                 .join(' ');
             document.getElementById('about-text').textContent = aboutText;
-
-            // Update contact section
-            const contactEmail = profileData.contactEmail || profileData.email;
-            document.getElementById('contact-email1').textContent = contactEmail;
-            document.getElementById('contact-email1').href = `mailto:${contactEmail}`;
+            document.getElementById('contact-email1').textContent = profileData.email;
+            document.getElementById('contact-email1').href = `mailto:${profileData.email}`;
             document.getElementById('contact-phone').textContent = profileData.phone;
             document.getElementById('contact-location').innerHTML = profileData.location;
         }
@@ -337,11 +345,11 @@
             expertise: "E-commerce, Internet Marketing, AI Applications",
             education: "Ph.D. in Industrial Engineering, University of Wisconsin-Madison, USA",
             email: "luarn@mail.ntust.edu.tw",
-            about1: "Dr. Luarn obtained his Bachelor's degree in Industrial Engineering from Tunghai University",
-            about2: ", followed by Master's and Doctoral degrees in Industrial Engineering from the University of Wisconsin-Madison, USA.",
-            about3: "In 2023, he was recognized by Stanford University as one of the world's top 2% scientists.", 
+            linkedin: "https://www.linkedin.com/in/pin-luarn-55098833/",
+            about1: "Dr. Luarn obtained his Bachelor's degree in Industrial Engineering from Tunghai University, followed by",
+            about2: " Master's and Doctoral degrees in Industrial Engineering from the University of Wisconsin-Madison, USA.",
+            about3: "In 2023, he was recognized by Stanford University as one of the world's top 2% scientists.",
             about4: "", // Add additional about content here if needed
-            contactEmail: "luarn@mail.ntust.edu.tw",
             phone: "886-2-2737-6754",
             location: "Office: T2-409<br>National Taiwan University of Science and Technology"
         };
