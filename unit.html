@@ -330,21 +330,21 @@
 
         // Unit information with names and attributes
         const unitInfo = {
-            1: { name: "Web Scraping, MediaPipe, Environment", attributes: ["Other Tools Projects", "Cognitive AI"] },
+            1: { name: "Web Scraping, MediaPipe, Environment", attributes: ["Other Tools Projects", "Perception AI"] },
             2: { name: "CV2", attributes: ["Other Tools Projects"] },
-            3: { name: "Object Detection", attributes: ["Cognitive AI"] },
-            4: { name: "Image Segmentation", attributes: ["Cognitive AI"] },
-            5: { name: "Face Detection", attributes: ["Cognitive AI"] },
-            6: { name: "Face Landmark Detection", attributes: ["Cognitive AI"] },
-            7: { name: "Pose Landmark Detection", attributes: ["Cognitive AI"] },
-            8: { name: "Hand Landmarks", attributes: ["Cognitive AI"] },
-            9: { name: "Gesture Recognition", attributes: ["Cognitive AI"] },
+            3: { name: "Object Detection", attributes: ["Perception AI"] },
+            4: { name: "Image Segmentation", attributes: ["Perception AI"] },
+            5: { name: "Face Detection", attributes: ["Perception AI"] },
+            6: { name: "Face Landmark Detection", attributes: ["Perception AI"] },
+            7: { name: "Pose Landmark Detection", attributes: ["Perception AI"] },
+            8: { name: "Hand Landmarks", attributes: ["Perception AI"] },
+            9: { name: "Gesture Recognition", attributes: ["Perception AI"] },
             10: { name: "Streamlit", attributes: ["Other Tools Projects"] },
             11: { name: "Local LLM", attributes: ["Generative AI"] },
             12: { name: "Neural Style Transfer", attributes: ["Generative AI"] },
             13: { name: "Torch", attributes: ["Generative AI"] },
             14: { name: "Arbitrary-image Real time NST", attributes: ["Generative AI"] },
-            15: { name: "YOLO", attributes: ["Cognitive AI"] },
+            15: { name: "YOLO", attributes: ["Perception AI"] },
             16: { name: "Using Python call LLM API", attributes: ["Generative AI"] },
             17: { name: "Building LLM from Scratch", attributes: ["Generative AI"] },
             18: { name: "RAG Introduction, LangChain", attributes: ["Generative AI"] },
@@ -473,7 +473,7 @@
                 const title = image.title;
                 const fileName = `unit${currentUnit}_${index + 1}`;
                 const attributeBadges = unit.attributes.map(attr => {
-                    const badgeClass = attr.includes('Cognitive') ? 'bg-primary' : 
+                    const badgeClass = attr.includes('Perception') ? 'bg-primary' : 
                                      attr.includes('Generative') ? 'bg-success' : 
                                      attr.includes('Agentic') ? 'bg-warning' : 'bg-secondary';
                     return `<span class="badge ${badgeClass} me-1">${attr}</span>`;
