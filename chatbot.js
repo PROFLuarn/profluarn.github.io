@@ -2,8 +2,9 @@
 class ChatBot {
     constructor() {
         // ⚠️ Important: Replace with your n8n webhook URL
+        // ****************************************************************
         this.webhookUrl = 'https://a3g.app.n8n.cloud/webhook/chat_webhook';
-        
+        // ****************************************************************        
         // Initialize session ID
         this.sessionId = this.getOrCreateSessionId();
         
@@ -522,7 +523,7 @@ class ChatBot {
                     
                     <div class="chat-messages" id="chatMessages">
                         <div class="message system">
-                            Welcome to Prof Luarn's AI Assistant! I can answer any questions for you.
+                            Welcome! I can answer any questions for you.
                         </div>
                     </div>
                     
