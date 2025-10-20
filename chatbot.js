@@ -513,7 +513,7 @@ class ChatBot {
                     <div class="chatbot-header">
                         <div class="chatbot-title">
                             <span class="title-icon">🤖</span>
-                            AI Assistant v6
+                            Prof Luarn's AI Assistant v6
                         </div>
                         <button class="chatbot-close" id="chatbotClose">
                             <i class="fas fa-times"></i>
@@ -522,7 +522,7 @@ class ChatBot {
                     
                     <div class="chat-messages" id="chatMessages">
                         <div class="message system">
-                            Welcome to AI Assistant! I can answer any questions about Professor Luarn's courses or AI topics.
+                            Welcome to Prof Luarn's AI Assistant! I can answer any questions for you.
                         </div>
                     </div>
                     
