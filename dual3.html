@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Characters - Gesture Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #canvas-container canvas {
+            position: absolute;
+            left: 33.33vw;
+            top: 0;
+            width: 66.67vw !important;
+            height: 100vh !important;
+        }
+
+        #webcam-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 280px;
+            height: 210px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+            background: #000;
+            transition: all 0.3s ease;
+        }
+
+        #webcam-container.collapsed {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+        }
+
+        #webcam-container.collapsed #webcam,
+        #webcam-container.collapsed #output_canvas {
+            display: none;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #output_canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+        }
+
+        #controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 0 12px 12px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            width: 33.33vw;
+            height: 100vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        #controls::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #controls::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #controls::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .scroll-zone-top, .scroll-zone-bottom {
+            position: fixed;
+            left: 0;
+            width: 33.33vw;
+            height: 60px;
+            pointer-events: none;
+            z-index: 9;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .scroll-zone-top {
+            top: 0;
+            background: linear-gradient(to bottom, rgba(79, 172, 254, 0.5), transparent);
+        }
+
+        .scroll-zone-bottom {
+            bottom: 0;
+            background: linear-gradient(to top, rgba(79, 172, 254, 0.5), transparent);
+        }
+
+        .scroll-zone-top.active, .scroll-zone-bottom.active {
+            opacity: 1;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: #667eea;
+            font-size: 20px;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 0;
+            z-index: 1;
+        }
+
+        .hand-status {
+            position: sticky;
+            top: 48px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            z-index: 1;
+            font-size: 11px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .hand-indicator {
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .hand-indicator.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .hand-indicator.clicking {
+            background: rgba(255, 107, 157, 0.6);
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .search-box {
+            margin-bottom: 10px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .animation-category {
+            margin-bottom: 15px;
+        }
+
+        .category-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ff6b9d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            padding: 10px 8px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            text-align: left;
+            position: relative;
+        }
+
+        .anim-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .anim-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .anim-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.6);
+        }
+
+        .anim-btn.hover-gesture {
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.8);
+            z-index: 10;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            min-width: 60px;
+            font-size: 12px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 5px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .value-display {
+            min-width: 35px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 12px;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 100;
+        }
+
+        #currentAnim {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 6px;
+            font-size: 11px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .info strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        #gesture-cursor {
+            position: fixed;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #667eea;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: all 0.05s ease;
+            display: none;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.8);
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        #gesture-cursor::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 1);
+        }
+
+        #gesture-cursor.clicking {
+            background: rgba(255, 107, 157, 0.6);
+            border-color: #ff6b9d;
+            transform: scale(0.9);
+            box-shadow: 0 0 40px rgba(255, 107, 157, 1);
+        }
+
+        #gesture-cursor.clicking::before {
+            background: #ff6b9d;
+            box-shadow: 0 0 15px rgba(255, 107, 157, 1);
+        }
+
+        #gesture-cursor.dragging {
+            background: rgba(255, 215, 0, 0.6);
+            border-color: #ffd700;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 1);
+        }
+
+        #gesture-cursor.dragging::before {
+            background: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 1);
+        }
+
+        .webcam-toggle {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 6;
+            transition: all 0.3s ease;
+        }
+
+        #webcam-container.collapsed .webcam-toggle {
+            bottom: 50%;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            padding: 8px;
+        }
+
+        .tutorial {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 15;
+            text-align: center;
+            max-width: 700px;
+        }
+
+        .tutorial h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .tutorial-hands {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 15px 0;
+        }
+
+        .tutorial-hand {
+            text-align: center;
+        }
+
+        .tutorial-hand-icon {
+            font-size: 60px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .tutorial-hand-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .tutorial-hand-text {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .close-tutorial {
+            margin-top: 15px;
+            padding: 10px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .character-label {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 5;
+        }
+
+        .character-label.pin {
+            color: #ff6b9d;
+            top: 10%;
+            left: 45%;
+            transform: translateX(-50%);
+        }
+
+        .character-label.cck {
+            color: #4facfe;
+            top: 10%;
+            right: 15%;
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="character-label pin">Pin</div>
+    <div class="character-label cck">CCK</div>
+    
+    <div id="webcam-container">
+        <video id="webcam" autoplay playsinline></video>
+        <canvas id="output_canvas"></canvas>
+        <button class="webcam-toggle" onclick="toggleWebcam()">📷</button>
+    </div>
+
+    <div class="scroll-zone-top" id="scrollZoneTop"></div>
+    <div class="scroll-zone-bottom" id="scrollZoneBottom"></div>
+
+    <div id="gesture-cursor"></div>
+    
+    <div id="loading">
+        Loading Characters...<br>
+        <span style="font-size: 16px;">Pin: 0% | CCK: 0%</span>
+    </div>
+
+    <div class="tutorial" id="tutorial">
+        <h3>🙌 雙角色同步控制</h3>
+        <p style="margin-bottom: 15px; color: #666;">Pin 和 CCK 將同步執行所有動畫</p>
+        <div class="tutorial-hands">
+            <div class="tutorial-hand">
+                <span class="tutorial-hand-icon">👉</span>
+                <div class="tutorial-hand-title">右手 - 游標</div>
+                <div class="tutorial-hand-text">
+                    伸出食指控制游標<br>
+                    移到頂部/底部自動捲動
+                </div>
+            </div>
+            <div class="tutorial-hand">
+                <span class="tutorial-hand-icon">✊</span>
+                <div class="tutorial-hand-title">左手 - 點擊</div>
+                <div class="tutorial-hand-text">
+                    快速握拳放開 = 點擊<br>
+                    握拳超過 0.8秒 = 拖拉
+                </div>
+            </div>
+        </div>
+        <button class="close-tutorial" onclick="closeTutorial()">開始使用 🎮</button>
+    </div>
+    
+    <div id="controls" style="display: none;">
+        <h2>🎭 雙角色控制</h2>
+        
+        <div class="hand-status">
+            <div class="hand-indicator" id="leftHandStatus">
+                ✊ 左手<br><small>等待中...</small>
+            </div>
+            <div class="hand-indicator" id="rightHandStatus">
+                👉 右手<br><small>等待中...</small>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 搜尋動畫...">
+        </div>
+
+        <div id="currentAnim">No animation</div>
+
+        <div class="control-row">
+            <label>速度:</label>
+            <input type="range" id="speed" min="0.1" max="2" step="0.1" value="1">
+            <span class="value-display" id="speedValue">1.0x</span>
+        </div>
+
+        <div id="animationList"></div>
+
+        <div class="info">
+            <strong>🎭 雙角色同步</strong>
+            <div style="margin-top: 5px;">
+            Pin 和 CCK 會同時執行相同動畫<br><br>
+            <strong>右手 👉</strong> 控制游標<br>
+            <strong>左手 ✊</strong> 點擊/拖拉<br>
+            • 快握快放 (< 0.8秒) = 點擊<br>
+            • 握住 (> 0.8秒) = 拖拉
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+    <script>
+        let scene, camera, renderer, clock, controls;
+        
+        // Two models with their own mixers
+        let modelPin, modelCCK;
+        let mixerPin, mixerCCK;
+        let animationsPin = [];
+        let animationsCCK = [];
+        let currentActionPin = null;
+        let currentActionCCK = null;
+        let animationSpeed = 1.0;
+        
+        // Loading progress
+        let loadingProgress = { pin: 0, cck: 0 };
+        
+        // Gesture control variables
+        let hands, webcamCamera;
+        let rightHand = { detected: false, position: { x: 0, y: 0 } };
+        let leftHand = { detected: false, isFist: false };
+        
+        const panelWidth = window.innerWidth / 3;
+        const panelHeight = window.innerHeight;
+        const scrollZoneHeight = panelHeight * 0.1;
+        
+        let cursorSmoothing = { x: 0, y: 0 };
+        let smoothingFactor = 0.6;
+        
+        let isMouseDown = false;
+        let lastMouseDownState = false;
+        let hoveredButton = null;
+        let dragStartScroll = 0;
+        let dragStartY = 0;
+        let clickStartTime = 0;
+        let clickThreshold = 800;
+        
+        let autoScrollInterval = null;
+
+        const categories = {
+            'Dance': ['Dance'],
+            'Movement': ['Walk', 'Run', 'Sprint', 'Jump', 'Climb', 'Slide', 'Dodge', 'Fall', 'Land'],
+            'Combat': ['Attack', 'Heavy', 'Thrust', 'Parry', 'Block', 'Get Hit', 'Warrior'],
+            'Sitting': ['Sit Chair', 'Sit'],
+            'Emotions': ['Happy', 'Sad', 'Mad', 'Laugh', 'Cry', 'Blush', 'Facepalm', 'Sigh'],
+            'Gestures': ['Wave', 'Hi', 'Goodbye', 'Thanks', 'Agree', 'Disagree', 'Deny', 'Show', 'Point'],
+            'Actions': ['Kneel', 'Pick Up', 'Pull', 'Push', 'Drink', 'Eat', 'Interact'],
+            'Poses': ['Chic Pose', 'Pose'],
+            'Swimming': ['Swim'],
+            'Crawling': ['Crawl'],
+            'Idle': ['Idle', 'Afk', 'Bored', 'Asleep', 'Meditate'],
+            'Other': []
+        };
+
+        function init() {
+            initScene();
+            initGestureRecognition();
+            loadModels();
+            animate();
+            
+            window.addEventListener('resize', onWindowResize);
+            document.getElementById('speed').addEventListener('input', (e) => {
+                animationSpeed = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = animationSpeed.toFixed(1) + 'x';
+                if (currentActionPin) currentActionPin.setEffectiveTimeScale(animationSpeed);
+                if (currentActionCCK) currentActionCCK.setEffectiveTimeScale(animationSpeed);
+            });
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterAnimations(e.target.value);
+            });
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorial').style.display = 'none';
+        }
+
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+
+            const renderWidth = window.innerWidth * 2 / 3;
+            const renderHeight = window.innerHeight;
+
+            camera = new THREE.PerspectiveCamera(45, renderWidth / renderHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(renderWidth, renderHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfff4e6, 1);
+            sunLight.position.set(10, 20, 10);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            scene.add(sunLight);
+
+            const fillLight1 = new THREE.DirectionalLight(0xff9db4, 0.4);
+            fillLight1.position.set(-5, 10, 5);
+            scene.add(fillLight1);
+
+            const fillLight2 = new THREE.DirectionalLight(0x9db4ff, 0.4);
+            fillLight2.position.set(5, 10, -5);
+            scene.add(fillLight2);
+
+            const groundGeometry = new THREE.CircleGeometry(15, 64);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x90EE90,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const gridHelper = new THREE.GridHelper(30, 30, 0x4a7c59, 0x7fb86e);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 1, 0);
+            controls.minDistance = 3;
+            controls.maxDistance = 12;
+            controls.maxPolarAngle = Math.PI / 2;
+
+            clock = new THREE.Clock();
+        }
+
+        function initGestureRecognition() {
+            hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+
+            hands.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.7,
+                minTrackingConfidence: 0.7
+            });
+
+            hands.onResults(onHandsResults);
+
+            const videoElement = document.getElementById('webcam');
+            webcamCamera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480
+            });
+
+            webcamCamera.start();
+        }
+
+        function loadModels() {
+            const loader = new THREE.GLTFLoader();
+            
+            // Load Pin model
+            loader.load(
+                'pin.glb',
+                (gltf) => {
+                    modelPin = gltf.scene;
+                    animationsPin = gltf.animations;
+                    mixerPin = new THREE.AnimationMixer(modelPin);
+                    
+                    setupModel(modelPin, -1.5);
+                    scene.add(modelPin);
+                    
+                    checkLoadingComplete();
+                },
+                (progress) => {
+                    loadingProgress.pin = (progress.loaded / progress.total * 100);
+                    updateLoadingDisplay();
+                },
+                (error) => {
+                    console.error('Error loading Pin:', error);
+                }
+            );
+            
+            // Load CCK model
+            loader.load(
+                'cck.glb',
+                (gltf) => {
+                    modelCCK = gltf.scene;
+                    animationsCCK = gltf.animations;
+                    mixerCCK = new THREE.AnimationMixer(modelCCK);
+                    
+                    setupModel(modelCCK, 1.5);
+                    scene.add(modelCCK);
+                    
+                    checkLoadingComplete();
+                },
+                (progress) => {
+                    loadingProgress.cck = (progress.loaded / progress.total * 100);
+                    updateLoadingDisplay();
+                },
+                (error) => {
+                    console.error('Error loading CCK:', error);
+                }
+            );
+        }
+
+        function setupModel(model, xOffset) {
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 2 / maxDim;
+            model.scale.setScalar(scale);
+            
+            model.position.sub(center.multiplyScalar(scale));
+            model.position.x = xOffset * 1.8;
+            model.position.y = 0;
+            
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+        }
+
+        function updateLoadingDisplay() {
+            const pinPercent = loadingProgress.pin.toFixed(0);
+            const cckPercent = loadingProgress.cck.toFixed(0);
+            document.querySelector('#loading span').textContent = `Pin: ${pinPercent}% | CCK: ${cckPercent}%`;
+        }
+
+        function checkLoadingComplete() {
+            if (modelPin && modelCCK) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('controls').style.display = 'block';
+                createAnimationButtons();
+            }
+        }
+
+        function onHandsResults(results) {
+            const canvasElement = document.getElementById('output_canvas');
+            const canvasCtx = canvasElement.getContext('2d');
+            
+            canvasElement.width = results.image.width;
+            canvasElement.height = results.image.height;
+
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            rightHand.detected = false;
+            leftHand.detected = false;
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                    const landmarks = results.multiHandLandmarks[i];
+                    const handedness = results.multiHandedness[i].label;
+                    
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, 
+                        {color: handedness === 'Right' ? '#00FF00' : '#FF0000', lineWidth: 2});
+                    drawLandmarks(canvasCtx, landmarks, 
+                        {color: handedness === 'Right' ? '#00FF00' : '#FF0000', lineWidth: 1, radius: 3});
+                    
+                    if (handedness === 'Left') {
+                        detectRightHandPosition(landmarks);
+                    } else if (handedness === 'Right') {
+                        detectLeftHandGesture(landmarks);
+                    }
+                }
+            }
+            
+            updateHandStatus();
+            updateCursor();
+            handleMouseState();
+            
+            canvasCtx.restore();
+        }
+
+        function detectRightHandPosition(landmarks) {
+            const index_tip = landmarks[8];
+            
+            const targetX = Math.max(0, Math.min(panelWidth, panelWidth * (1 - index_tip.x)));
+            const targetY = Math.max(0, Math.min(panelHeight, panelHeight * index_tip.y));
+            
+            cursorSmoothing.x += (targetX - cursorSmoothing.x) * smoothingFactor;
+            cursorSmoothing.y += (targetY - cursorSmoothing.y) * smoothingFactor;
+            
+            rightHand.position.x = cursorSmoothing.x;
+            rightHand.position.y = cursorSmoothing.y;
+            rightHand.detected = true;
+            
+            handleAutoScroll();
+        }
+
+        function detectLeftHandGesture(landmarks) {
+            const thumb_tip = landmarks[4];
+            const index_tip = landmarks[8];
+            const index_pip = landmarks[6];
+            const middle_tip = landmarks[12];
+            const middle_pip = landmarks[10];
+            const ring_tip = landmarks[16];
+            const ring_pip = landmarks[14];
+            const pinky_tip = landmarks[20];
+            const pinky_pip = landmarks[18];
+            
+            let bentFingers = 0;
+            
+            if (index_tip.y > index_pip.y) bentFingers++;
+            if (middle_tip.y > middle_pip.y) bentFingers++;
+            if (ring_tip.y > ring_pip.y) bentFingers++;
+            if (pinky_tip.y > pinky_pip.y) bentFingers++;
+            
+            const wrist = landmarks[0];
+            const thumb_distance = Math.abs(thumb_tip.x - wrist.x);
+            const index_distance = Math.abs(index_tip.x - wrist.x);
+            if (thumb_distance < index_distance * 0.7) bentFingers++;
+            
+            leftHand.isFist = bentFingers >= 4;
+            leftHand.detected = true;
+        }
+
+        function updateHandStatus() {
+            const rightStatus = document.getElementById('rightHandStatus');
+            const leftStatus = document.getElementById('leftHandStatus');
+            
+            if (rightHand.detected) {
+                rightStatus.innerHTML = '👉 右手<br><small>控制中 ✓</small>';
+                rightStatus.classList.add('active');
+            } else {
+                rightStatus.innerHTML = '👉 右手<br><small>等待中...</small>';
+                rightStatus.classList.remove('active');
+            }
+            
+            if (leftHand.detected) {
+                if (leftHand.isFist) {
+                    leftStatus.innerHTML = '✊ 左手<br><small>按下中 🔴</small>';
+                    leftStatus.classList.add('clicking');
+                    leftStatus.classList.add('active');
+                } else {
+                    leftStatus.innerHTML = '✋ 左手<br><small>偵測中 ✓</small>';
+                    leftStatus.classList.remove('clicking');
+                    leftStatus.classList.add('active');
+                }
+            } else {
+                leftStatus.innerHTML = '✊ 左手<br><small>等待中...</small>';
+                leftStatus.classList.remove('active', 'clicking');
+            }
+        }
+
+        function updateCursor() {
+            const cursor = document.getElementById('gesture-cursor');
+            
+            if (rightHand.detected) {
+                cursor.style.left = (rightHand.position.x - 25) + 'px';
+                cursor.style.top = (rightHand.position.y - 25) + 'px';
+                cursor.style.display = 'block';
+                
+                cursor.className = '';
+                if (leftHand.detected && leftHand.isFist) {
+                    if (isMouseDown && (Date.now() - clickStartTime >= clickThreshold)) {
+                        cursor.classList.add('dragging');
+                    } else {
+                        cursor.classList.add('clicking');
+                    }
+                }
+                
+                updateHover();
+            } else {
+                cursor.style.display = 'none';
+                clearHover();
+            }
+        }
+
+        function updateHover() {
+            const x = rightHand.position.x;
+            const y = rightHand.position.y;
+            
+            if (hoveredButton) {
+                hoveredButton.classList.remove('hover-gesture');
+            }
+            
+            const elements = document.elementsFromPoint(x, y);
+            const button = elements.find(el => el.classList.contains('anim-btn'));
+            
+            if (button) {
+                button.classList.add('hover-gesture');
+                hoveredButton = button;
+            } else {
+                hoveredButton = null;
+            }
+        }
+
+        function clearHover() {
+            if (hoveredButton) {
+                hoveredButton.classList.remove('hover-gesture');
+                hoveredButton = null;
+            }
+        }
+
+        function handleMouseState() {
+            const shouldBeDown = leftHand.detected && leftHand.isFist;
+            
+            if (shouldBeDown && !lastMouseDownState) {
+                isMouseDown = true;
+                clickStartTime = Date.now();
+                dragStartY = rightHand.position.y;
+                dragStartScroll = document.getElementById('controls').scrollTop;
+            }
+            
+            if (!shouldBeDown && lastMouseDownState) {
+                const clickDuration = Date.now() - clickStartTime;
+                isMouseDown = false;
+                
+                if (clickDuration < clickThreshold && hoveredButton) {
+                    hoveredButton.click();
+                }
+                
+                clickStartTime = 0;
+            }
+            
+            if (isMouseDown && rightHand.detected) {
+                const holdDuration = Date.now() - clickStartTime;
+                if (holdDuration >= clickThreshold) {
+                    const deltaY = rightHand.position.y - dragStartY;
+                    document.getElementById('controls').scrollTop = dragStartScroll + deltaY;
+                }
+            }
+            
+            lastMouseDownState = shouldBeDown;
+        }
+
+        function handleAutoScroll() {
+            const y = rightHand.position.y;
+            const topZone = document.getElementById('scrollZoneTop');
+            const bottomZone = document.getElementById('scrollZoneBottom');
+            
+            if (autoScrollInterval) {
+                clearInterval(autoScrollInterval);
+                autoScrollInterval = null;
+                topZone.classList.remove('active');
+                bottomZone.classList.remove('active');
+            }
+            
+            if (y < scrollZoneHeight) {
+                topZone.classList.add('active');
+                autoScrollInterval = setInterval(() => {
+                    document.getElementById('controls').scrollTop -= 5;
+                }, 16);
+            } else if (y > panelHeight - scrollZoneHeight) {
+                bottomZone.classList.add('active');
+                autoScrollInterval = setInterval(() => {
+                    document.getElementById('controls').scrollTop += 5;
+                }, 16);
+            }
+        }
+
+        function toggleWebcam() {
+            const container = document.getElementById('webcam-container');
+            const button = document.querySelector('.webcam-toggle');
+            
+            container.classList.toggle('collapsed');
+            
+            if (container.classList.contains('collapsed')) {
+                button.textContent = '📷';
+            } else {
+                button.textContent = '📷';
+            }
+        }
+
+        function categorizeAnimation(name) {
+            for (const [category, keywords] of Object.entries(categories)) {
+                for (const keyword of keywords) {
+                    if (name.includes(keyword)) {
+                        return category;
+                    }
+                }
+            }
+            return 'Other';
+        }
+
+        function createAnimationButtons() {
+            const animList = document.getElementById('animationList');
+            const categorized = {};
+            
+            animationsPin.forEach((anim, index) => {
+                const category = categorizeAnimation(anim.name);
+                if (!categorized[category]) {
+                    categorized[category] = [];
+                }
+                categorized[category].push({ name: anim.name, index: index });
+            });
+            
+            Object.keys(categories).forEach(category => {
+                if (categorized[category] && categorized[category].length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'animation-category';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'category-title';
+                    title.textContent = `${category} (${categorized[category].length})`;
+                    categoryDiv.appendChild(title);
+                    
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.className = 'button-group';
+                    
+                    categorized[category].forEach(anim => {
+                        const btn = document.createElement('button');
+                        btn.className = 'anim-btn';
+                        btn.textContent = anim.name.replace(/ 01| 02| 03| 04| 05| 06/g, '');
+                        btn.setAttribute('data-anim-name', anim.name);
+                        btn.onclick = () => playAnimation(anim.index, btn);
+                        buttonGroup.appendChild(btn);
+                    });
+                    
+                    categoryDiv.appendChild(buttonGroup);
+                    animList.appendChild(categoryDiv);
+                }
+            });
+        }
+
+        function playAnimation(index, button) {
+            if (currentActionPin) currentActionPin.stop();
+            if (currentActionCCK) currentActionCCK.stop();
+            
+            document.querySelectorAll('.anim-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            button.classList.add('active');
+            
+            const clipPin = animationsPin[index];
+            currentActionPin = mixerPin.clipAction(clipPin);
+            currentActionPin.reset();
+            currentActionPin.setLoop(THREE.LoopRepeat);
+            currentActionPin.setEffectiveTimeScale(animationSpeed);
+            currentActionPin.play();
+            
+            const clipCCK = animationsCCK[index];
+            currentActionCCK = mixerCCK.clipAction(clipCCK);
+            currentActionCCK.reset();
+            currentActionCCK.setLoop(THREE.LoopRepeat);
+            currentActionCCK.setEffectiveTimeScale(animationSpeed);
+            currentActionCCK.play();
+            
+            document.getElementById('currentAnim').textContent = `Playing: ${clipPin.name}`;
+        }
+
+        function filterAnimations(searchText) {
+            const search = searchText.toLowerCase();
+            const categories = document.querySelectorAll('.animation-category');
+            
+            categories.forEach(category => {
+                const buttons = category.querySelectorAll('.anim-btn');
+                let visibleCount = 0;
+                
+                buttons.forEach(btn => {
+                    const animName = btn.getAttribute('data-anim-name').toLowerCase();
+                    if (animName.includes(search)) {
+                        btn.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                });
+                
+                category.style.display = visibleCount > 0 ? 'block' : 'none';
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            if (mixerPin) mixerPin.update(delta);
+            if (mixerCCK) mixerCCK.update(delta);
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const renderWidth = window.innerWidth * 2 / 3;
+            const renderHeight = window.innerHeight;
+            
+            camera.aspect = renderWidth / renderHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(renderWidth, renderHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
