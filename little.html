@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Prince - Animation Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #controls::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #controls::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #controls::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 24px;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 0;
+            z-index: 1;
+        }
+
+        .search-box {
+            margin-bottom: 15px;
+            position: sticky;
+            top: 60px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 5px 0;
+            z-index: 1;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .animation-category {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff6b9d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .anim-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .anim-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .anim-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.6);
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            min-width: 80px;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        #currentAnim {
+            position: sticky;
+            top: 110px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="loading">Loading The Little Prince...<br><span style="font-size: 16px;">0%</span></div>
+    
+    <div id="controls" style="display: none;">
+        <h2>🤴 The Little Prince</h2>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search animations...">
+        </div>
+
+        <div id="currentAnim">No animation playing</div>
+
+        <div class="control-row">
+            <label>Speed:</label>
+            <input type="range" id="speed" min="0.1" max="2" step="0.1" value="1">
+            <span class="value-display" id="speedValue">1.0x</span>
+        </div>
+
+        <div id="animationList"></div>
+
+        <div class="info">
+            💡 142 animations loaded! Click any animation to play. Use mouse to rotate view.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, model, mixer, clock, controls;
+        let animations = [];
+        let currentAction = null;
+        let animationSpeed = 1.0;
+
+        // Animation categories
+        const categories = {
+            'Dance': ['Dance'],
+            'Movement': ['Walk', 'Run', 'Sprint', 'Jump', 'Climb', 'Slide', 'Dodge', 'Fall', 'Land'],
+            'Combat': ['Attack', 'Heavy', 'Thrust', 'Parry', 'Block', 'Get Hit'],
+            'Emotions': ['Happy', 'Sad', 'Mad', 'Laugh', 'Cry', 'Blush', 'Facepalm', 'Sigh'],
+            'Gestures': ['Wave', 'Hi', 'Goodbye', 'Thanks', 'Agree', 'Disagree', 'Deny', 'Show'],
+            'Actions': ['Sit', 'Kneel', 'Pick Up', 'Pull', 'Push', 'Drink', 'Eat', 'Interact'],
+            'Swimming': ['Swim'],
+            'Crawling': ['Crawl'],
+            'Idle': ['Idle', 'Afk', 'Bored', 'Asleep', 'Meditate'],
+            'Other': []
+        };
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 1.5, 4);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfff4e6, 1);
+            sunLight.position.set(10, 20, 10);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 50;
+            sunLight.shadow.camera.left = -10;
+            sunLight.shadow.camera.right = 10;
+            sunLight.shadow.camera.top = 10;
+            sunLight.shadow.camera.bottom = -10;
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0x9db4c0, 0.5);
+            fillLight.position.set(-5, 10, -5);
+            scene.add(fillLight);
+
+            // Ground
+            const groundGeometry = new THREE.CircleGeometry(15, 64);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x90EE90,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Grid
+            const gridHelper = new THREE.GridHelper(30, 30, 0x4a7c59, 0x7fb86e);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 1, 0);
+            controls.minDistance = 1.5;
+            controls.maxDistance = 10;
+            controls.maxPolarAngle = Math.PI / 2;
+
+            // Clock
+            clock = new THREE.Clock();
+
+            // Load model
+            loadModel();
+
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.getElementById('speed').addEventListener('input', (e) => {
+                animationSpeed = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = animationSpeed.toFixed(1) + 'x';
+                if (currentAction) {
+                    currentAction.setEffectiveTimeScale(animationSpeed);
+                }
+            });
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterAnimations(e.target.value);
+            });
+
+            animate();
+        }
+
+        function loadModel() {
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                '/mnt/user-data/uploads/The_Little_Prince.glb',
+                (gltf) => {
+                    model = gltf.scene;
+                    animations = gltf.animations;
+                    
+                    // Setup mixer
+                    mixer = new THREE.AnimationMixer(model);
+                    
+                    // Scale and position model
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 2 / maxDim;
+                    model.scale.setScalar(scale);
+                    
+                    model.position.sub(center.multiplyScalar(scale));
+                    model.position.y = 0;
+                    
+                    // Enable shadows
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    
+                    scene.add(model);
+                    
+                    // Create animation buttons
+                    createAnimationButtons();
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('controls').style.display = 'block';
+                    
+                    console.log(`Loaded ${animations.length} animations`);
+                },
+                (progress) => {
+                    const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                    document.querySelector('#loading span').textContent = `${percent}%`;
+                },
+                (error) => {
+                    console.error('Error loading model:', error);
+                    document.getElementById('loading').innerHTML = 'Error loading model';
+                }
+            );
+        }
+
+        function categorizeAnimation(name) {
+            for (const [category, keywords] of Object.entries(categories)) {
+                for (const keyword of keywords) {
+                    if (name.includes(keyword)) {
+                        return category;
+                    }
+                }
+            }
+            return 'Other';
+        }
+
+        function createAnimationButtons() {
+            const animList = document.getElementById('animationList');
+            const categorized = {};
+            
+            // Categorize animations
+            animations.forEach((anim, index) => {
+                const category = categorizeAnimation(anim.name);
+                if (!categorized[category]) {
+                    categorized[category] = [];
+                }
+                categorized[category].push({ name: anim.name, index: index });
+            });
+            
+            // Create buttons by category
+            Object.keys(categories).forEach(category => {
+                if (categorized[category] && categorized[category].length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'animation-category';
+                    categoryDiv.setAttribute('data-category', category);
+                    
+                    const title = document.createElement('div');
+                    title.className = 'category-title';
+                    title.textContent = `${category} (${categorized[category].length})`;
+                    categoryDiv.appendChild(title);
+                    
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.className = 'button-group';
+                    
+                    categorized[category].forEach(anim => {
+                        const btn = document.createElement('button');
+                        btn.className = 'anim-btn';
+                        btn.textContent = anim.name.replace(/ 01| 02| 03| 04/g, '');
+                        btn.setAttribute('data-anim-name', anim.name);
+                        btn.onclick = () => playAnimation(anim.index, btn);
+                        buttonGroup.appendChild(btn);
+                    });
+                    
+                    categoryDiv.appendChild(buttonGroup);
+                    animList.appendChild(categoryDiv);
+                }
+            });
+        }
+
+        function playAnimation(index, button) {
+            if (currentAction) {
+                currentAction.stop();
+            }
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.anim-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            const clip = animations[index];
+            currentAction = mixer.clipAction(clip);
+            currentAction.reset();
+            currentAction.setLoop(THREE.LoopRepeat);
+            currentAction.setEffectiveTimeScale(animationSpeed);
+            currentAction.play();
+            
+            document.getElementById('currentAnim').textContent = `Playing: ${clip.name}`;
+        }
+
+        function filterAnimations(searchText) {
+            const search = searchText.toLowerCase();
+            const categories = document.querySelectorAll('.animation-category');
+            
+            categories.forEach(category => {
+                const buttons = category.querySelectorAll('.anim-btn');
+                let visibleCount = 0;
+                
+                buttons.forEach(btn => {
+                    const animName = btn.getAttribute('data-anim-name').toLowerCase();
+                    if (animName.includes(search)) {
+                        btn.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                });
+                
+                category.style.display = visibleCount > 0 ? 'block' : 'none';
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            if (mixer) mixer.update(delta);
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
