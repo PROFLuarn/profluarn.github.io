@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Dancing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 24px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dance-btn {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+            color: white;
+        }
+
+        .dance-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 157, 0.4);
+        }
+
+        .dance-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            min-width: 100px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="loading">Loading 3D Model...</div>
+    
+    <div id="controls" style="display: none;">
+        <h2>🎭 Dance Controls</h2>
+        
+        <div class="button-group">
+            <button class="dance-btn" onclick="startDance('wave')">🌊 Wave Dance</button>
+            <button class="dance-btn" onclick="startDance('bounce')">🎾 Bounce Dance</button>
+            <button class="dance-btn" onclick="startDance('spin')">🌀 Spin Dance</button>
+            <button class="dance-btn" onclick="startDance('shake')">💥 Shake Dance</button>
+            <button class="dance-btn" onclick="stopDance()">⏹️ Stop</button>
+        </div>
+
+        <div class="control-row">
+            <label>Speed:</label>
+            <input type="range" id="speed" min="0.5" max="3" step="0.1" value="1">
+            <span class="value-display" id="speedValue">1.0</span>
+        </div>
+
+        <div class="control-row">
+            <label>Intensity:</label>
+            <input type="range" id="intensity" min="0.5" max="3" step="0.1" value="1">
+            <span class="value-display" id="intensityValue">1.0</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, model, mixer, clock;
+        let currentDance = null;
+        let danceSpeed = 1.0;
+        let danceIntensity = 1.0;
+        let originalPosition = new THREE.Vector3();
+        let originalRotation = new THREE.Euler();
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(
+                45,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 1.5, 5);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            const spotLight1 = new THREE.SpotLight(0xff6b9d, 1);
+            spotLight1.position.set(-5, 5, 0);
+            scene.add(spotLight1);
+
+            const spotLight2 = new THREE.SpotLight(0x4facfe, 1);
+            spotLight2.position.set(5, 5, 0);
+            scene.add(spotLight2);
+
+            // Floor
+            const floorGeometry = new THREE.CircleGeometry(10, 32);
+            const floorMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2d2d44,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(20, 20, 0x667eea, 0x444466);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+
+            // Controls
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 1, 0);
+
+            // Clock for animations
+            clock = new THREE.Clock();
+
+            // Load model
+            loadModel();
+
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.getElementById('speed').addEventListener('input', (e) => {
+                danceSpeed = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = danceSpeed.toFixed(1);
+            });
+            document.getElementById('intensity').addEventListener('input', (e) => {
+                danceIntensity = parseFloat(e.target.value);
+                document.getElementById('intensityValue').textContent = danceIntensity.toFixed(1);
+            });
+
+            animate();
+        }
+
+        function loadModel() {
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                'person_0.glb',
+                (gltf) => {
+                    model = gltf.scene;
+                    
+                    // Center and scale model
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 2 / maxDim;
+                    model.scale.setScalar(scale);
+                    
+                    model.position.sub(center.multiplyScalar(scale));
+                    model.position.y = 0;
+                    
+                    originalPosition.copy(model.position);
+                    originalRotation.copy(model.rotation);
+                    
+                    // Enable shadows
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    
+                    scene.add(model);
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('controls').style.display = 'block';
+                },
+                (progress) => {
+                    const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                    document.getElementById('loading').textContent = `Loading... ${percent}%`;
+                },
+                (error) => {
+                    console.error('Error loading model:', error);
+                    document.getElementById('loading').textContent = 'Error loading model';
+                }
+            );
+        }
+
+        function startDance(type) {
+            currentDance = type;
+            document.querySelectorAll('.dance-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function stopDance() {
+            currentDance = null;
+            if (model) {
+                model.position.copy(originalPosition);
+                model.rotation.copy(originalRotation);
+            }
+            document.querySelectorAll('.dance-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function updateDance(deltaTime) {
+            if (!model || !currentDance) return;
+
+            const time = clock.getElapsedTime() * danceSpeed;
+            const intensity = danceIntensity;
+
+            switch (currentDance) {
+                case 'wave':
+                    model.position.y = originalPosition.y + Math.sin(time * 2) * 0.3 * intensity;
+                    model.rotation.z = Math.sin(time * 1.5) * 0.2 * intensity;
+                    model.rotation.x = Math.sin(time * 1.2) * 0.1 * intensity;
+                    break;
+
+                case 'bounce':
+                    model.position.y = originalPosition.y + Math.abs(Math.sin(time * 3)) * 0.5 * intensity;
+                    model.rotation.y = originalRotation.y + Math.sin(time * 2) * 0.3 * intensity;
+                    break;
+
+                case 'spin':
+                    model.rotation.y += deltaTime * 2 * danceSpeed;
+                    model.position.y = originalPosition.y + Math.sin(time * 3) * 0.2 * intensity;
+                    break;
+
+                case 'shake':
+                    model.position.x = originalPosition.x + Math.sin(time * 10) * 0.1 * intensity;
+                    model.position.z = originalPosition.z + Math.cos(time * 10) * 0.1 * intensity;
+                    model.rotation.z = Math.sin(time * 15) * 0.3 * intensity;
+                    break;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const deltaTime = clock.getDelta();
+            updateDance(deltaTime);
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
