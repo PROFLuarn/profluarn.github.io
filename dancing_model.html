@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Model Dancing</title>
+    <title>3D Model Dancing with Procedural Animation</title>
     <style>
         * {
             margin: 0;
@@ -33,6 +33,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             z-index: 10;
             backdrop-filter: blur(10px);
+            max-width: 320px;
         }
 
         h2 {
@@ -85,6 +86,7 @@
             font-weight: 600;
             color: #333;
             min-width: 100px;
+            font-size: 14px;
         }
 
         input[type="range"] {
@@ -120,6 +122,7 @@
             text-align: right;
             font-weight: 600;
             color: #667eea;
+            font-size: 14px;
         }
 
         #loading {
@@ -132,6 +135,15 @@
             font-weight: 600;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
+
+        .info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -142,10 +154,12 @@
         <h2>🎭 Dance Controls</h2>
         
         <div class="button-group">
-            <button class="dance-btn" onclick="startDance('wave')">🌊 Wave Dance</button>
+            <button class="dance-btn" onclick="startDance('wave')">🌊 Wave Motion</button>
             <button class="dance-btn" onclick="startDance('bounce')">🎾 Bounce Dance</button>
             <button class="dance-btn" onclick="startDance('spin')">🌀 Spin Dance</button>
-            <button class="dance-btn" onclick="startDance('shake')">💥 Shake Dance</button>
+            <button class="dance-btn" onclick="startDance('swing')">💃 Swing Dance</button>
+            <button class="dance-btn" onclick="startDance('twist')">🔄 Twist Dance</button>
+            <button class="dance-btn" onclick="startDance('groove')">🎵 Groove Dance</button>
             <button class="dance-btn" onclick="stopDance()">⏹️ Stop</button>
         </div>
 
@@ -157,8 +171,12 @@
 
         <div class="control-row">
             <label>Intensity:</label>
-            <input type="range" id="intensity" min="0.5" max="3" step="0.1" value="1">
-            <span class="value-display" id="intensityValue">1.0</span>
+            <input type="range" id="intensity" min="0.5" max="3" step="0.1" value="1.5">
+            <span class="value-display" id="intensityValue">1.5</span>
+        </div>
+
+        <div class="info">
+            💡 This model uses procedural animation to create dance movements. Use mouse to rotate view.
         </div>
     </div>
 
@@ -167,12 +185,12 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        let scene, camera, renderer, model, mixer, clock;
+        let scene, camera, renderer, model, clock;
         let currentDance = null;
         let danceSpeed = 1.0;
-        let danceIntensity = 1.0;
-        let originalPosition = new THREE.Vector3();
-        let originalRotation = new THREE.Euler();
+        let danceIntensity = 1.5;
+        let modelParts = [];
+        let originalTransforms = new Map();
 
         function init() {
             // Scene setup
@@ -194,6 +212,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             // Lights
@@ -203,22 +222,30 @@
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(5, 10, 5);
             directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
 
-            const spotLight1 = new THREE.SpotLight(0xff6b9d, 1);
+            const spotLight1 = new THREE.SpotLight(0xff6b9d, 1.5);
             spotLight1.position.set(-5, 5, 0);
+            spotLight1.angle = Math.PI / 6;
             scene.add(spotLight1);
 
-            const spotLight2 = new THREE.SpotLight(0x4facfe, 1);
+            const spotLight2 = new THREE.SpotLight(0x4facfe, 1.5);
             spotLight2.position.set(5, 5, 0);
+            spotLight2.angle = Math.PI / 6;
             scene.add(spotLight2);
 
-            // Floor
-            const floorGeometry = new THREE.CircleGeometry(10, 32);
+            const backLight = new THREE.PointLight(0xffffff, 0.5);
+            backLight.position.set(0, 3, -5);
+            scene.add(backLight);
+
+            // Floor with pattern
+            const floorGeometry = new THREE.CircleGeometry(10, 64);
             const floorMaterial = new THREE.MeshStandardMaterial({
                 color: 0x2d2d44,
-                roughness: 0.8,
-                metalness: 0.2
+                roughness: 0.7,
+                metalness: 0.3
             });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             floor.rotation.x = -Math.PI / 2;
@@ -226,15 +253,20 @@
             scene.add(floor);
 
             // Grid helper
-            const gridHelper = new THREE.GridHelper(20, 20, 0x667eea, 0x444466);
+            const gridHelper = new THREE.GridHelper(20, 40, 0x667eea, 0x444466);
             gridHelper.position.y = 0.01;
             scene.add(gridHelper);
+
+            // Particle system for ambiance
+            createParticles();
 
             // Controls
             const controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.target.set(0, 1, 0);
+            controls.minDistance = 2;
+            controls.maxDistance = 10;
 
             // Clock for animations
             clock = new THREE.Clock();
@@ -256,6 +288,30 @@
             animate();
         }
 
+        function createParticles() {
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 100;
+            const positions = new Float32Array(particlesCount * 3);
+
+            for (let i = 0; i < particlesCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 20;
+                positions[i + 1] = Math.random() * 10;
+                positions[i + 2] = (Math.random() - 0.5) * 20;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const particlesMaterial = new THREE.PointsMaterial({
+                color: 0x667eea,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
+        }
+
         function loadModel() {
             const loader = new THREE.GLTFLoader();
             loader.load(
@@ -275,14 +331,20 @@
                     model.position.sub(center.multiplyScalar(scale));
                     model.position.y = 0;
                     
-                    originalPosition.copy(model.position);
-                    originalRotation.copy(model.rotation);
-                    
-                    // Enable shadows
+                    // Store all mesh parts and their original transforms
                     model.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
                             child.receiveShadow = true;
+                            
+                            // Store original transform
+                            originalTransforms.set(child, {
+                                position: child.position.clone(),
+                                rotation: child.rotation.clone(),
+                                scale: child.scale.clone()
+                            });
+                            
+                            modelParts.push(child);
                         }
                     });
                     
@@ -290,6 +352,8 @@
                     
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('controls').style.display = 'block';
+                    
+                    console.log(`Model loaded with ${modelParts.length} parts`);
                 },
                 (progress) => {
                     const percent = (progress.loaded / progress.total * 100).toFixed(0);
@@ -310,40 +374,114 @@
 
         function stopDance() {
             currentDance = null;
+            
+            // Reset all parts to original transforms
+            modelParts.forEach(part => {
+                const original = originalTransforms.get(part);
+                if (original) {
+                    part.position.copy(original.position);
+                    part.rotation.copy(original.rotation);
+                    part.scale.copy(original.scale);
+                }
+            });
+            
             if (model) {
-                model.position.copy(originalPosition);
-                model.rotation.copy(originalRotation);
+                model.rotation.set(0, 0, 0);
+                model.position.y = 0;
             }
+            
             document.querySelectorAll('.dance-btn').forEach(btn => btn.classList.remove('active'));
         }
 
         function updateDance(deltaTime) {
-            if (!model || !currentDance) return;
+            if (!model || !currentDance || modelParts.length === 0) return;
 
             const time = clock.getElapsedTime() * danceSpeed;
             const intensity = danceIntensity;
 
             switch (currentDance) {
                 case 'wave':
-                    model.position.y = originalPosition.y + Math.sin(time * 2) * 0.3 * intensity;
-                    model.rotation.z = Math.sin(time * 1.5) * 0.2 * intensity;
-                    model.rotation.x = Math.sin(time * 1.2) * 0.1 * intensity;
+                    // Wave motion through body parts
+                    modelParts.forEach((part, index) => {
+                        const original = originalTransforms.get(part);
+                        if (original) {
+                            const wave = Math.sin(time * 2 + index * 0.3) * 0.15 * intensity;
+                            part.rotation.z = original.rotation.z + wave;
+                            part.rotation.x = original.rotation.x + Math.cos(time * 1.5 + index * 0.2) * 0.1 * intensity;
+                        }
+                    });
+                    model.position.y = Math.sin(time * 2) * 0.2 * intensity;
                     break;
 
                 case 'bounce':
-                    model.position.y = originalPosition.y + Math.abs(Math.sin(time * 3)) * 0.5 * intensity;
-                    model.rotation.y = originalRotation.y + Math.sin(time * 2) * 0.3 * intensity;
+                    // Bouncing motion with compression
+                    const bounce = Math.abs(Math.sin(time * 3)) * intensity;
+                    model.position.y = bounce * 0.4;
+                    
+                    const compression = 1 - (bounce * 0.2);
+                    model.scale.y = compression;
+                    model.scale.x = model.scale.z = 1 + (1 - compression) * 0.5;
+                    
+                    model.rotation.y = Math.sin(time * 1.5) * 0.3 * intensity;
                     break;
 
                 case 'spin':
+                    // Spinning with part animations
                     model.rotation.y += deltaTime * 2 * danceSpeed;
-                    model.position.y = originalPosition.y + Math.sin(time * 3) * 0.2 * intensity;
+                    model.position.y = Math.sin(time * 3) * 0.2 * intensity;
+                    
+                    modelParts.forEach((part, index) => {
+                        const original = originalTransforms.get(part);
+                        if (original) {
+                            part.rotation.y = original.rotation.y + Math.sin(time * 2 + index * 0.5) * 0.2 * intensity;
+                        }
+                    });
                     break;
 
-                case 'shake':
-                    model.position.x = originalPosition.x + Math.sin(time * 10) * 0.1 * intensity;
-                    model.position.z = originalPosition.z + Math.cos(time * 10) * 0.1 * intensity;
-                    model.rotation.z = Math.sin(time * 15) * 0.3 * intensity;
+                case 'swing':
+                    // Swinging side to side
+                    const swing = Math.sin(time * 2) * intensity;
+                    model.rotation.z = swing * 0.3;
+                    model.rotation.y = Math.sin(time * 1.2) * 0.5 * intensity;
+                    model.position.y = Math.abs(Math.sin(time * 2)) * 0.15 * intensity;
+                    
+                    modelParts.forEach((part, index) => {
+                        const original = originalTransforms.get(part);
+                        if (original) {
+                            part.rotation.z = original.rotation.z + swing * 0.2 * (index % 2 ? 1 : -1);
+                        }
+                    });
+                    break;
+
+                case 'twist':
+                    // Twisting motion
+                    modelParts.forEach((part, index) => {
+                        const original = originalTransforms.get(part);
+                        if (original) {
+                            const twist = Math.sin(time * 3 + index * 0.4) * intensity;
+                            part.rotation.y = original.rotation.y + twist * 0.4;
+                            part.rotation.x = original.rotation.x + Math.cos(time * 2 + index * 0.3) * 0.2 * intensity;
+                        }
+                    });
+                    model.position.y = Math.sin(time * 3) * 0.15 * intensity;
+                    break;
+
+                case 'groove':
+                    // Grooving with rhythmic motion
+                    const groove = Math.sin(time * 4) * intensity;
+                    model.rotation.y = groove * 0.2;
+                    model.rotation.z = Math.sin(time * 3) * 0.15 * intensity;
+                    model.position.y = Math.abs(Math.sin(time * 4)) * 0.25 * intensity;
+                    
+                    modelParts.forEach((part, index) => {
+                        const original = originalTransforms.get(part);
+                        if (original) {
+                            const phase = time * 4 + index * 0.2;
+                            part.rotation.z = original.rotation.z + Math.sin(phase) * 0.2 * intensity;
+                            part.rotation.x = original.rotation.x + Math.cos(phase * 1.3) * 0.15 * intensity;
+                            part.position.y = original.position.y + Math.sin(phase * 2) * 0.01 * intensity;
+                        }
+                    });
                     break;
             }
         }
