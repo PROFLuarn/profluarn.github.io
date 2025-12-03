@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Prince - Improved Gesture Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #webcam-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 280px;
+            height: 210px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+            background: #000;
+        }
+
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        #output_canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        #controls::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        #controls::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        #controls::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 24px;
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 0;
+            z-index: 1;
+        }
+
+        .gesture-status {
+            position: sticky;
+            top: 60px;
+            background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 1;
+            font-size: 14px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .gesture-status.detecting {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            animation: none;
+        }
+
+        .search-box {
+            margin-bottom: 15px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .animation-category {
+            margin-bottom: 20px;
+        }
+
+        .category-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff6b9d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 12px;
+            font-size: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            text-align: left;
+            position: relative;
+        }
+
+        .anim-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .anim-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .anim-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.6);
+        }
+
+        .anim-btn.hover-gesture {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.8);
+            z-index: 10;
+        }
+
+        .anim-btn.hover-gesture::before {
+            content: '👉';
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            animation: pointRight 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pointRight {
+            0%, 100% { left: -25px; }
+            50% { left: -20px; }
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            min-width: 80px;
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .value-display {
+            min-width: 40px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 100;
+        }
+
+        #currentAnim {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.15);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .info strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Gesture cursor - larger and more visible */
+        #gesture-cursor {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #ff6b9d;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: all 0.05s ease;
+            display: none;
+            box-shadow: 0 0 30px rgba(255, 107, 157, 0.8);
+            background: rgba(255, 107, 157, 0.2);
+        }
+
+        #gesture-cursor.selecting {
+            background: rgba(255, 107, 157, 0.7);
+            transform: scale(1.3);
+            border-color: #4facfe;
+            box-shadow: 0 0 40px rgba(79, 172, 254, 1);
+        }
+
+        #gesture-cursor.scrolling {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        .webcam-toggle {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 6;
+        }
+
+        /* Progress bar for dwell selection */
+        #dwell-progress {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10001;
+            display: none;
+        }
+
+        #dwell-progress-circle {
+            fill: none;
+            stroke: #4facfe;
+            stroke-width: 4;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        .tutorial {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 15;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .tutorial h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .tutorial-gesture {
+            display: inline-block;
+            margin: 10px 15px;
+            text-align: center;
+        }
+
+        .tutorial-gesture-icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .tutorial-gesture-text {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .close-tutorial {
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div id="webcam-container">
+        <video id="webcam" autoplay playsinline></video>
+        <canvas id="output_canvas"></canvas>
+        <button class="webcam-toggle" onclick="toggleWebcam()">📷</button>
+    </div>
+
+    <div id="gesture-cursor"></div>
+    
+    <!-- Dwell progress indicator -->
+    <svg id="dwell-progress" width="60" height="60">
+        <circle id="dwell-progress-circle" cx="30" cy="30" r="25"/>
+    </svg>
+    
+    <div id="loading">
+        Loading The Little Prince...<br>
+        <span style="font-size: 16px;">0%</span>
+    </div>
+
+    <!-- Tutorial overlay -->
+    <div class="tutorial" id="tutorial">
+        <h3>🎮 手勢控制教學</h3>
+        <div>
+            <div class="tutorial-gesture">
+                <span class="tutorial-gesture-icon">☝️</span>
+                <span class="tutorial-gesture-text">食指指向<br>移動游標</span>
+            </div>
+            <div class="tutorial-gesture">
+                <span class="tutorial-gesture-icon">👆</span>
+                <span class="tutorial-gesture-text">停留 1 秒<br>選擇按鈕</span>
+            </div>
+            <div class="tutorial-gesture">
+                <span class="tutorial-gesture-icon">✌️</span>
+                <span class="tutorial-gesture-text">比 2<br>滑動選單</span>
+            </div>
+        </div>
+        <button class="close-tutorial" onclick="closeTutorial()">開始使用</button>
+    </div>
+    
+    <div id="controls" style="display: none;">
+        <h2>🤴 The Little Prince</h2>
+        
+        <div class="gesture-status" id="gestureStatus">
+            🎥 Initializing camera...
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Search animations...">
+        </div>
+
+        <div id="currentAnim">No animation playing</div>
+
+        <div class="control-row">
+            <label>Speed:</label>
+            <input type="range" id="speed" min="0.1" max="2" step="0.1" value="1">
+            <span class="value-display" id="speedValue">1.0x</span>
+        </div>
+
+        <div id="animationList"></div>
+
+        <div class="info">
+            <strong>💡 改良版手勢控制：</strong>
+            <div style="margin-top: 8px;">
+            ☝️ <strong>食指指向</strong> - 移動游標（更精準）<br>
+            👆 <strong>停留選擇</strong> - 游標停在按鈕上 1 秒自動選取（不需握拳）<br>
+            ✌️ <strong>比2滑動</strong> - 食指+中指伸出，上下移動來滾動選單<br>
+            ✋ <strong>張開手掌</strong> - 暫停控制
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+
+    <script>
+        let scene, camera, renderer, model, mixer, clock, controls;
+        let animations = [];
+        let currentAction = null;
+        let animationSpeed = 1.0;
+        
+        // Gesture control variables
+        let hands, webcamCamera;
+        let gestureState = {
+            detected: false,
+            gesture: 'none',
+            position: { x: 0, y: 0 },
+            scrolling: false,
+            selecting: false
+        };
+        
+        // Improved control variables
+        let hoveredButton = null;
+        let hoverStartTime = null;
+        let dwellTime = 1000; // 1 second to select
+        let lastScrollY = null;
+        let scrollSmoothness = 0.3;
+        let cursorSmoothing = { x: 0, y: 0 };
+        let smoothingFactor = 0.3;
+
+        const categories = {
+            'Dance': ['Dance'],
+            'Movement': ['Walk', 'Run', 'Sprint', 'Jump', 'Climb', 'Slide', 'Dodge', 'Fall', 'Land'],
+            'Combat': ['Attack', 'Heavy', 'Thrust', 'Parry', 'Block', 'Get Hit'],
+            'Emotions': ['Happy', 'Sad', 'Mad', 'Laugh', 'Cry', 'Blush', 'Facepalm', 'Sigh'],
+            'Gestures': ['Wave', 'Hi', 'Goodbye', 'Thanks', 'Agree', 'Disagree', 'Deny', 'Show'],
+            'Actions': ['Sit', 'Kneel', 'Pick Up', 'Pull', 'Push', 'Drink', 'Eat', 'Interact'],
+            'Swimming': ['Swim'],
+            'Crawling': ['Crawl'],
+            'Idle': ['Idle', 'Afk', 'Bored', 'Asleep', 'Meditate'],
+            'Other': []
+        };
+
+        function init() {
+            initScene();
+            initGestureRecognition();
+            loadModel();
+            animate();
+            
+            window.addEventListener('resize', onWindowResize);
+            document.getElementById('speed').addEventListener('input', (e) => {
+                animationSpeed = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = animationSpeed.toFixed(1) + 'x';
+                if (currentAction) {
+                    currentAction.setEffectiveTimeScale(animationSpeed);
+                }
+            });
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterAnimations(e.target.value);
+            });
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorial').style.display = 'none';
+        }
+
+        function initScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 4);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfff4e6, 1);
+            sunLight.position.set(10, 20, 10);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            scene.add(sunLight);
+
+            const fillLight = new THREE.DirectionalLight(0x9db4c0, 0.5);
+            fillLight.position.set(-5, 10, -5);
+            scene.add(fillLight);
+
+            const groundGeometry = new THREE.CircleGeometry(15, 64);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x90EE90,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const gridHelper = new THREE.GridHelper(30, 30, 0x4a7c59, 0x7fb86e);
+            gridHelper.position.y = 0.01;
+            scene.add(gridHelper);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.target.set(0, 1, 0);
+            controls.minDistance = 1.5;
+            controls.maxDistance = 10;
+            controls.maxPolarAngle = Math.PI / 2;
+
+            clock = new THREE.Clock();
+        }
+
+        function initGestureRecognition() {
+            hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.7,
+                minTrackingConfidence: 0.7
+            });
+
+            hands.onResults(onHandsResults);
+
+            const videoElement = document.getElementById('webcam');
+            webcamCamera = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({ image: videoElement });
+                },
+                width: 640,
+                height: 480
+            });
+
+            webcamCamera.start();
+        }
+
+        function onHandsResults(results) {
+            const canvasElement = document.getElementById('output_canvas');
+            const canvasCtx = canvasElement.getContext('2d');
+            
+            canvasElement.width = results.image.width;
+            canvasElement.height = results.image.height;
+
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                
+                drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+                drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 3});
+                
+                detectGesture(landmarks);
+                gestureState.detected = true;
+            } else {
+                gestureState.detected = false;
+                gestureState.gesture = 'none';
+                updateGestureStatus('👋 請將手放在鏡頭前');
+                hideCursor();
+                resetHover();
+            }
+            
+            canvasCtx.restore();
+        }
+
+        function detectGesture(landmarks) {
+            const thumb_tip = landmarks[4];
+            const index_tip = landmarks[8];
+            const index_pip = landmarks[6];
+            const middle_tip = landmarks[12];
+            const middle_pip = landmarks[10];
+            const ring_tip = landmarks[16];
+            const pinky_tip = landmarks[20];
+            const wrist = landmarks[0];
+            
+            // Check finger extensions
+            const indexExtended = index_tip.y < index_pip.y;
+            const middleExtended = middle_tip.y < middle_pip.y;
+            const ringExtended = ring_tip.y < landmarks[14].y;
+            const pinkyExtended = pinky_tip.y < landmarks[18].y;
+            
+            // Smooth cursor position using index finger tip
+            const targetX = window.innerWidth * (1 - index_tip.x);
+            const targetY = window.innerHeight * index_tip.y;
+            
+            cursorSmoothing.x += (targetX - cursorSmoothing.x) * smoothingFactor;
+            cursorSmoothing.y += (targetY - cursorSmoothing.y) * smoothingFactor;
+            
+            gestureState.position.x = cursorSmoothing.x;
+            gestureState.position.y = cursorSmoothing.y;
+            
+            // Gesture recognition
+            if (indexExtended && middleExtended && !ringExtended && !pinkyExtended) {
+                // Peace sign (✌️) - Scroll mode
+                gestureState.gesture = 'scroll';
+                gestureState.scrolling = true;
+                gestureState.selecting = false;
+                handleScrollGesture(middle_tip.y);
+                updateGestureStatus('✌️ 滾動模式 - 上下移動手指來滾動');
+                updateCursor('scrolling');
+                resetHover();
+            } else if (indexExtended && !middleExtended && !ringExtended && !pinkyExtended) {
+                // Single finger pointing (☝️) - Cursor mode
+                gestureState.gesture = 'point';
+                gestureState.scrolling = false;
+                gestureState.selecting = false;
+                handleHoverWithDwell();
+                updateGestureStatus('☝️ 游標模式 - 停留在按鈕上選擇');
+                updateCursor('normal');
+            } else {
+                // Other gestures - Pause
+                gestureState.gesture = 'pause';
+                gestureState.scrolling = false;
+                gestureState.selecting = false;
+                updateGestureStatus('✋ 暫停中');
+                updateCursor('normal');
+                resetHover();
+            }
+            
+            updateCursorPosition();
+        }
+
+        function distance3D(point1, point2) {
+            return Math.sqrt(
+                Math.pow(point1.x - point2.x, 2) +
+                Math.pow(point1.y - point2.y, 2) +
+                Math.pow(point1.z - point2.z, 2)
+            );
+        }
+
+        function updateCursorPosition() {
+            const cursor = document.getElementById('gesture-cursor');
+            cursor.style.left = gestureState.position.x + 'px';
+            cursor.style.top = gestureState.position.y + 'px';
+            cursor.style.display = 'block';
+            
+            // Update dwell progress position
+            const dwellProgress = document.getElementById('dwell-progress');
+            dwellProgress.style.left = (gestureState.position.x - 30) + 'px';
+            dwellProgress.style.top = (gestureState.position.y - 30) + 'px';
+        }
+
+        function updateCursor(mode) {
+            const cursor = document.getElementById('gesture-cursor');
+            cursor.className = '';
+            if (mode === 'selecting') {
+                cursor.classList.add('selecting');
+            } else if (mode === 'scrolling') {
+                cursor.classList.add('scrolling');
+            }
+        }
+
+        function hideCursor() {
+            document.getElementById('gesture-cursor').style.display = 'none';
+            document.getElementById('dwell-progress').style.display = 'none';
+        }
+
+        function handleScrollGesture(yPosition) {
+            if (lastScrollY === null) {
+                lastScrollY = yPosition;
+                return;
+            }
+            
+            const scrollDelta = (yPosition - lastScrollY) * 2000 * scrollSmoothness;
+            const controlsDiv = document.getElementById('controls');
+            controlsDiv.scrollTop += scrollDelta;
+            lastScrollY = yPosition;
+        }
+
+        function handleHoverWithDwell() {
+            const x = gestureState.position.x;
+            const y = gestureState.position.y;
+            
+            const elements = document.elementsFromPoint(x, y);
+            const button = elements.find(el => el.classList.contains('anim-btn'));
+            
+            if (button && button !== hoveredButton) {
+                // New button hovered
+                resetHover();
+                hoveredButton = button;
+                hoveredButton.classList.add('hover-gesture');
+                hoverStartTime = Date.now();
+                document.getElementById('dwell-progress').style.display = 'block';
+            } else if (button === hoveredButton && hoveredButton) {
+                // Continue hovering same button
+                const elapsed = Date.now() - hoverStartTime;
+                const progress = Math.min(elapsed / dwellTime, 1);
+                
+                // Update progress circle
+                const circle = document.getElementById('dwell-progress-circle');
+                const offset = 283 - (283 * progress);
+                circle.style.strokeDashoffset = offset;
+                
+                if (progress >= 1) {
+                    // Dwell time complete - select!
+                    hoveredButton.click();
+                    resetHover();
+                    updateCursor('selecting');
+                    setTimeout(() => updateCursor('normal'), 300);
+                }
+            } else if (!button) {
+                // Not hovering any button
+                resetHover();
+            }
+        }
+
+        function resetHover() {
+            if (hoveredButton) {
+                hoveredButton.classList.remove('hover-gesture');
+                hoveredButton = null;
+            }
+            hoverStartTime = null;
+            lastScrollY = null;
+            const circle = document.getElementById('dwell-progress-circle');
+            circle.style.strokeDashoffset = 283;
+            document.getElementById('dwell-progress').style.display = 'none';
+        }
+
+        function updateGestureStatus(message) {
+            const status = document.getElementById('gestureStatus');
+            status.textContent = message;
+            status.classList.add('detecting');
+        }
+
+        function toggleWebcam() {
+            const container = document.getElementById('webcam-container');
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function loadModel() {
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                'little.glb',
+                (gltf) => {
+                    model = gltf.scene;
+                    animations = gltf.animations;
+                    
+                    mixer = new THREE.AnimationMixer(model);
+                    
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 2 / maxDim;
+                    model.scale.setScalar(scale);
+                    
+                    model.position.sub(center.multiplyScalar(scale));
+                    model.position.y = 0;
+                    
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    
+                    scene.add(model);
+                    createAnimationButtons();
+                    
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('controls').style.display = 'block';
+                },
+                (progress) => {
+                    const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                    document.querySelector('#loading span').textContent = `${percent}%`;
+                },
+                (error) => {
+                    console.error('Error loading model:', error);
+                    document.getElementById('loading').innerHTML = 'Error loading model';
+                }
+            );
+        }
+
+        function categorizeAnimation(name) {
+            for (const [category, keywords] of Object.entries(categories)) {
+                for (const keyword of keywords) {
+                    if (name.includes(keyword)) {
+                        return category;
+                    }
+                }
+            }
+            return 'Other';
+        }
+
+        function createAnimationButtons() {
+            const animList = document.getElementById('animationList');
+            const categorized = {};
+            
+            animations.forEach((anim, index) => {
+                const category = categorizeAnimation(anim.name);
+                if (!categorized[category]) {
+                    categorized[category] = [];
+                }
+                categorized[category].push({ name: anim.name, index: index });
+            });
+            
+            Object.keys(categories).forEach(category => {
+                if (categorized[category] && categorized[category].length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'animation-category';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'category-title';
+                    title.textContent = `${category} (${categorized[category].length})`;
+                    categoryDiv.appendChild(title);
+                    
+                    const buttonGroup = document.createElement('div');
+                    buttonGroup.className = 'button-group';
+                    
+                    categorized[category].forEach(anim => {
+                        const btn = document.createElement('button');
+                        btn.className = 'anim-btn';
+                        btn.textContent = anim.name.replace(/ 01| 02| 03| 04/g, '');
+                        btn.setAttribute('data-anim-name', anim.name);
+                        btn.onclick = () => playAnimation(anim.index, btn);
+                        buttonGroup.appendChild(btn);
+                    });
+                    
+                    categoryDiv.appendChild(buttonGroup);
+                    animList.appendChild(categoryDiv);
+                }
+            });
+        }
+
+        function playAnimation(index, button) {
+            if (currentAction) {
+                currentAction.stop();
+            }
+            
+            document.querySelectorAll('.anim-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            button.classList.add('active');
+            
+            const clip = animations[index];
+            currentAction = mixer.clipAction(clip);
+            currentAction.reset();
+            currentAction.setLoop(THREE.LoopRepeat);
+            currentAction.setEffectiveTimeScale(animationSpeed);
+            currentAction.play();
+            
+            document.getElementById('currentAnim').textContent = `Playing: ${clip.name}`;
+        }
+
+        function filterAnimations(searchText) {
+            const search = searchText.toLowerCase();
+            const categories = document.querySelectorAll('.animation-category');
+            
+            categories.forEach(category => {
+                const buttons = category.querySelectorAll('.anim-btn');
+                let visibleCount = 0;
+                
+                buttons.forEach(btn => {
+                    const animName = btn.getAttribute('data-anim-name').toLowerCase();
+                    if (animName.includes(search)) {
+                        btn.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                });
+                
+                category.style.display = visibleCount > 0 ? 'block' : 'none';
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            if (mixer) mixer.update(delta);
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
