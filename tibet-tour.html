@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西藏文化與歷史景點導覽 | 探索雪域高原</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700;900&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --maroon: #8B1A1A;
+            --gold: #D4AF37;
+            --deep-blue: #1A4B7A;
+            --snow-white: #F8F9FA;
+            --mountain-gray: #4A5568;
+            --sky-blue: #87CEEB;
+            --sacred-red: #C41E3A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            line-height: 1.8;
+            color: var(--mountain-gray);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--maroon) 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(135, 206, 235, 0.1) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 10;
+            color: white;
+            padding: 2rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+            opacity: 0.95;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .hero .tagline {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            font-weight: 300;
+            opacity: 0.85;
+            max-width: 600px;
+            margin: 0 auto;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-20px); }
+            60% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .scroll-indicator::after {
+            content: '↓';
+            font-size: 2rem;
+            color: white;
+            opacity: 0.7;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 6rem 0;
+            position: relative;
+        }
+
+        section:nth-child(even) {
+            background: white;
+        }
+
+        .section-title {
+            font-family: 'Noto Serif TC', serif;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            color: var(--maroon);
+            margin-bottom: 3rem;
+            text-align: center;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--sacred-red) 100%);
+            border-radius: 2px;
+        }
+
+        .intro-text {
+            font-size: 1.2rem;
+            line-height: 2;
+            color: var(--mountain-gray);
+            max-width: 900px;
+            margin: 0 auto 4rem;
+            text-align: center;
+        }
+
+        /* Destination Cards */
+        .destination-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .destination-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .destination-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--maroon), var(--gold));
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .destination-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .destination-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .destination-header {
+            padding: 2.5rem 2rem 1.5rem;
+            background: linear-gradient(135deg, var(--deep-blue) 0%, var(--maroon) 100%);
+            color: white;
+        }
+
+        .destination-header h3 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .destination-header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .destination-body {
+            padding: 2rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+
+        .feature-list li {
+            padding: 0.8rem 0;
+            padding-left: 2rem;
+            position: relative;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li::before {
+            content: '◆';
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        .section-subtitle {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--deep-blue);
+            margin: 2rem 0 1rem;
+            padding-left: 1rem;
+            border-left: 4px solid var(--gold);
+        }
+
+        /* Medical Culture Section */
+        .medical-timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline-item {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--sacred-red);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .timeline-item h4 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1.8rem;
+            color: var(--maroon);
+            margin-bottom: 1rem;
+        }
+
+        /* Table Styles */
+        .info-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 2rem 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .info-table thead {
+            background: linear-gradient(135deg, var(--deep-blue), var(--maroon));
+            color: white;
+        }
+
+        .info-table th {
+            padding: 1.5rem;
+            font-weight: 600;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        .info-table td {
+            padding: 1.5rem;
+            background: white;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .info-table tbody tr:hover {
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .info-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Health Tips */
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .tip-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-top: 4px solid var(--gold);
+            transition: all 0.3s ease;
+        }
+
+        .tip-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }
+
+        .tip-card h4 {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 1.5rem;
+            color: var(--deep-blue);
+            margin-bottom: 1rem;
+        }
+
+        .tip-card ul {
+            list-style: none;
+        }
+
+        .tip-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .tip-card li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--sacred-red);
+            font-weight: bold;
+        }
+
+        /* Cultural Insights */
+        .insight-box {
+            background: linear-gradient(135deg, rgba(26, 75, 122, 0.05) 0%, rgba(139, 26, 26, 0.05) 100%);
+            border-left: 5px solid var(--maroon);
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            font-size: 1.1rem;
+            line-height: 1.9;
+        }
+
+        .highlight-text {
+            background: linear-gradient(120deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, var(--maroon) 0%, var(--deep-blue) 100%);
+            color: white;
+            padding: 4rem 0 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .footer-title {
+            font-family: 'Noto Serif TC', serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--gold);
+        }
+
+        .footer-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .divider {
+            width: 100px;
+            height: 2px;
+            background: var(--gold);
+            margin: 2rem auto;
+        }
+
+        .copyright {
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .destination-grid {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                padding: 4rem 0;
+            }
+
+            .container {
+                padding: 0 1.5rem;
+            }
+
+            .info-table {
+                font-size: 0.9rem;
+            }
+
+            .info-table th,
+            .info-table td {
+                padding: 1rem;
+            }
+        }
+
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Fade-in Animation on Scroll */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(196, 30, 58, 0.05);
+            border-left: 5px solid var(--sacred-red);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1.5rem 0;
+            font-size: 1rem;
+            font-style: italic;
+            color: var(--sacred-red);
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(26, 75, 122, 0.05);
+            border-left: 5px solid var(--deep-blue);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 1.5rem 0;
+            font-size: 1rem;
+            color: var(--deep-blue);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="hero-content">
+            <h1>西藏文化與歷史景點導覽</h1>
+            <p class="subtitle">專業旅遊規劃參考指南</p>
+            <p class="tagline">探索神秘的雪域高原，體驗千年藏族文化</p>
+        </div>
+        <div class="scroll-indicator"></div>
+    </div>
+
+    <!-- Overview Section -->
+    <section>
+        <div class="container">
+            <h2 class="section-title fade-in">行程概覽</h2>
+            <p class="intro-text fade-in">
+                本導覽涵蓋西藏最具代表性的歷史文化景點，包括宮殿、寺廟、以及獨特的藏醫文化體驗。每個景點都蘊含著豐富的歷史故事與文化內涵，適合深度文化旅遊愛好者。
+            </p>
+        </div>
+    </section>
+
+    <!-- Destinations Section -->
+    <section>
+        <div class="container">
+            <h2 class="section-title fade-in">核心景點介紹</h2>
+            
+            <div class="destination-grid">
+                <!-- Yumbulagang Palace -->
+                <div class="destination-card fade-in">
+                    <div class="destination-header">
+                        <h3>雍布拉康宮</h3>
+                        <p class="subtitle">Yumbulagang Palace</p>
+                    </div>
+                    <div class="destination-body">
+                        <h4 class="section-subtitle">景點特色</h4>
+                        <ul class="feature-list">
+                            <li>西藏第一座宮殿，建於公元前2世紀</li>
+                            <li>距今已有2000多年歷史</li>
+                            <li>按照原有建築樣式修復重建</li>
+                            <li>與藏族起源傳說密切相關</li>
+                        </ul>
+                        
+                        <h4 class="section-subtitle">文化背景</h4>
+                        <div class="insight-box">
+                            根據藏族傳說，藏族的祖先源於<span class="highlight-text">「猴子變人」</span>的神話故事。觀世音菩薩派遣神猴降臨雪域高原，與羅剎女結合，繁衍出藏族人民。雍布拉康正是第一位藏王的居所，見證了藏族文明的起源。宮殿內的壁畫生動描繪了這段傳奇歷史。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Samye Monastery -->
+                <div class="destination-card fade-in">
+                    <div class="destination-header">
+                        <h3>桑耶寺</h3>
+                        <p class="subtitle">Samye Monastery</p>
+                    </div>
+                    <div class="destination-body">
+                        <h4 class="section-subtitle">歷史地位</h4>
+                        <ul class="feature-list">
+                            <li>西藏第一座「佛、法、僧」三寶具全的寺廟</li>
+                            <li>由蓮花生大師創建，屬寧瑪派（紅教）</li>
+                            <li>西藏最早的七位出家僧人在此修行</li>
+                            <li>融合藏式、印度、漢式三種建築風格</li>
+                        </ul>
+                        
+                        <h4 class="section-subtitle">名稱由來</h4>
+                        <div class="insight-box">
+                            「桑耶」一詞源於松贊干布國王見到蓮花生大師幻化出的寺廟樣貌時，發出的驚嘆之聲。寺廟尚未完工時，大師便從手掌中幻化出建成後的景象，讓國王預先目睹這座偉大建築的未來面貌。
+                        </div>
+
+                        <h4 class="section-subtitle">參觀須知</h4>
+                        <ul class="feature-list">
+                            <li>不可單手指佛像</li>
+                            <li>不可隨意觸摸佛像或壁畫</li>
+                            <li>可戴帽子和墨鏡，但需保持尊重</li>
+                            <li>供養隨心，可點燈或現金供養</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tibetan Medicine Section -->
+    <section>
+        <div class="container">
+            <h2 class="section-title fade-in">藏醫文化體驗</h2>
+            
+            <p class="intro-text fade-in">
+                藏醫學擁有比西醫更早的解剖學歷史，其獨特的診斷方法令人驚嘆。藏醫院傳統上設於寺廟內，如桑耶寺和布達拉宮都設有專門的藏醫院。
+            </p>
+
+            <h3 class="section-subtitle fade-in">古代診斷方法演進</h3>
+
+            <div class="medical-timeline">
+                <!-- Stone Diagnosis -->
+                <div class="timeline-item fade-in">
+                    <h4>1. 石診（最早期方法）</h4>
+                    <p style="margin-bottom: 1.5rem;">針對游牧民族生活特點發展出的遠距診斷方法：</p>
+                    
+                    <table class="info-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">步驟</th>
+                                <th>操作方法</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>取石</strong></td>
+                                <td>病人從帳篷按方向走三步，蹲下撿起一塊石頭握在手中</td>
+                            </tr>
+                            <tr>
+                                <td><strong>包裹</strong></td>
+                                <td>用酥油覆蓋石頭，外層再包上哈達</td>
+                            </tr>
+                            <tr>
+                                <td><strong>診斷</strong></td>
+                                <td>藏醫觀察石頭的凹陷、裂痕、顏色、紋路來診斷病情</td>
+                            </tr>
+                            <tr>
+                                <td><strong>治療</strong></td>
+                                <td>開藥後由家人帶回給病人服用</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Urine Diagnosis -->
+                <div class="timeline-item fade-in">
+                    <h4>2. 尿診（第二階段方法）</h4>
+                    <p style="margin-bottom: 1rem;">藏醫透過多感官檢測尿液進行診斷：</p>
+                    <ul class="feature-list">
+                        <li><strong>觀察：</strong>檢視尿液顏色</li>
+                        <li><strong>聞：</strong>辨別氣味</li>
+                        <li><strong>嚐：</strong>品嚐味道（酸、甜、苦等）</li>
+                        <li><strong>觸：</strong>感受質地</li>
+                    </ul>
+                    <div class="warning-box">
+                        <strong>注意：</strong>長期從事尿診的藏醫可能會失明、失去嗅覺和味覺，因此當地居民特別尊重這些犧牲奉獻的醫者。
+                    </div>
+                </div>
+
+                <!-- Palm Diagnosis -->
+                <div class="timeline-item fade-in">
+                    <h4>3. 掌診（現代主流方法）</h4>
+                    <p style="margin-bottom: 1rem;">目前最普遍使用的診斷方法，透過觀察手掌紋路來診斷病情：</p>
+                    <ul class="feature-list">
+                        <li>手掌和腳掌對應全身經絡穴位</li>
+                        <li>掌紋變化可預知潛在病症</li>
+                        <li>建議拍攝高清照片記錄，方便追蹤健康變化</li>
+                        <li>著重預防醫學，提前預警疾病</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Three Trees -->
+            <h3 class="section-subtitle fade-in" style="margin-top: 4rem;">醫學唐卡：三棵樹的奧秘</h3>
+            <p class="intro-text fade-in">
+                藏醫學的核心知識濃縮在三幅醫學唐卡中，被稱為「三棵樹」。完全理解這三棵樹，即可成為資深藏醫。
+            </p>
+
+            <table class="info-table fade-in">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">唐卡名稱</th>
+                        <th>內容說明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>第一棵樹</strong></td>
+                        <td>生命樹 - 描述人體生理功能和病理變化</td>
+                    </tr>
+                    <tr>
+                        <td><strong>第二棵樹</strong></td>
+                        <td>診斷樹 - 說明診斷方法，包括脈診、七脈輪等</td>
+                    </tr>
+                    <tr>
+                        <td><strong>第三棵樹</strong></td>
+                        <td>治療樹 - 講解治療方法與藥物使用</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box fade-in">
+                <strong>提示：</strong>遊客可在網路上搜尋「藏醫三棵樹」或「醫學唐卡」來欣賞這些珍貴的醫學藝術品。
+            </div>
+        </div>
+    </section>
+
+    <!-- Health Tips Section -->
+    <section>
+        <div class="container">
+            <h2 class="section-title fade-in">高原旅遊健康須知</h2>
+
+            <h3 class="section-subtitle fade-in">高海拔對身體的影響</h3>
+            <p class="intro-text fade-in">
+                西藏平均海拔超過4000米，高原環境對人體會產生特殊影響：
+            </p>
+
+            <ul class="feature-list fade-in" style="max-width: 900px; margin: 2rem auto;">
+                <li>大腦缺氧可能導致思維遲緩、記憶力下降</li>
+                <li>心率會變慢（導遊自述最慢降至每分鐘52-53下）</li>
+                <li>心臟會膨脹以適應高原環境</li>
+                <li>身體器官膨脹會放大潛在小病痛</li>
+                <li>可能出現平時不明顯的腰酸、頸部不適等症狀</li>
+            </ul>
+
+            <h3 class="section-subtitle fade-in" style="margin-top: 3rem;">藏族傳統壽命與現代改善</h3>
+            <div class="insight-box fade-in">
+                歷史上藏族人民平均壽命僅約40歲，主要原因包括高海拔環境導致生理機能下降、缺乏醫療資源、疾病只能自生自滅，早期連天花都被視為不治之症。現代醫療和藏醫藥的發展大幅改善了這一情況。藏醫注重預防醫學，奇怪病症的發生率僅為內地的一半（10% vs 20%）。
+            </div>
+
+            <div class="tips-grid fade-in">
+                <div class="tip-card">
+                    <h4>健康建議</h4>
+                    <ul>
+                        <li>保持樂觀心態最重要</li>
+                        <li>心理因素對高原反應影響極大</li>
+                        <li>不要過度擔心</li>
+                        <li>身體膨脹的輕微不適是正常預警</li>
+                        <li>可參考藏醫掌診</li>
+                    </ul>
+                </div>
+                <div class="tip-card">
+                    <h4>行前準備</h4>
+                    <ul>
+                        <li>調整心態</li>
+                        <li>準備舒適衣物</li>
+                        <li>攜帶防曬用品</li>
+                        <li>準備零錢供養</li>
+                        <li>提前了解文化禁忌</li>
+                    </ul>
+                </div>
+                <div class="tip-card">
+                    <h4>參觀禮儀</h4>
+                    <ul>
+                        <li>進寺廟前摘帽和墨鏡</li>
+                        <li>不可單手指佛像</li>
+                        <li>不可觸摸佛像壁畫</li>
+                        <li>保持安靜尊重</li>
+                        <li>拍照前先徵詢</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cultural Insights Section -->
+    <section>
+        <div class="container">
+            <h2 class="section-title fade-in">藏族文化洞察</h2>
+
+            <h3 class="section-subtitle fade-in">宗教信仰與生活哲學</h3>
+            <p class="intro-text fade-in">
+                藏族老百姓對佛教的信仰深入生活的每個層面：
+            </p>
+
+            <div class="destination-grid fade-in">
+                <div class="tip-card">
+                    <h4>信仰核心</h4>
+                    <ul>
+                        <li>不求今生，只求來世</li>
+                        <li>今生遭遇皆為前世因果</li>
+                        <li>拜佛求心理安定</li>
+                        <li>尋求克服困難的力量</li>
+                    </ul>
+                </div>
+                <div class="tip-card">
+                    <h4>生活智慧</h4>
+                    <ul>
+                        <li>每個人身邊都有「佛菩薩」</li>
+                        <li>關鍵時刻給予指引的人</li>
+                        <li>友善待人，獲得友善回報</li>
+                        <li>心態決定一切</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 class="section-subtitle fade-in" style="margin-top: 3rem;">寺廟供養文化</h3>
+            <div class="insight-box fade-in">
+                <p style="margin-bottom: 1rem;"><strong>藏族寺廟的僧侶供養制度：</strong></p>
+                <ul class="feature-list">
+                    <li><strong>早期：</strong>七戶人家供養一位僧人</li>
+                    <li><strong>現代：</strong>政府撥款 + 門票收入 + 信眾供養</li>
+                    <li><strong>在編僧人：</strong>如同公職人員，領取固定工資</li>
+                    <li><strong>供養方式：</strong>點燈、現金、刷金等，隨心隨意</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <h3 class="footer-title">扎西德勒</h3>
+            <p class="footer-text">
+                西藏是一片充滿神秘色彩的土地，擁有悠久的歷史、獨特的文化和令人驚嘆的醫學傳統。在旅途中保持開放、尊重的心態，以樂觀積極的精神面對高原環境的挑戰。正如藏族諺語所說：「心態好了，什麼都好了。」
+            </p>
+            <div class="divider"></div>
+            <p class="footer-text">
+                <strong>祝您旅途愉快！</strong>
+            </p>
+            <p class="copyright">
+                本報告基於專業導遊實地講解整理 | 僅供旅遊規劃參考
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all fade-in elements
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
