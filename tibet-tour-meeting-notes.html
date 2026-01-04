@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西藏文化景點導覽筆記 | 實地講解記錄</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans TC', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        /* Content */
+        .content {
+            padding: 2rem;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+        }
+
+        .section-subtitle {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 1.5rem 0 1rem;
+            padding-left: 1rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Metadata Table */
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .metadata-item {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .metadata-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .metadata-value {
+            color: var(--text-primary);
+        }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .data-table thead {
+            background: var(--primary);
+            color: white;
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .data-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Action Items */
+        .action-grid {
+            display: grid;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .action-item {
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: start;
+            transition: all 0.2s;
+        }
+
+        .action-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .action-category {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+
+        .action-description {
+            color: var(--text-primary);
+        }
+
+        .priority {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.25rem;
+            color: var(--accent);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem 1.5rem;
+            margin: -1.5rem -1.5rem 1.5rem;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        /* Lists */
+        .bullet-list {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .bullet-list li {
+            padding: 0.5rem 0 0.5rem 2rem;
+            position: relative;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .bullet-list li:last-child {
+            border-bottom: none;
+        }
+
+        .bullet-list li::before {
+            content: '◆';
+            position: absolute;
+            left: 0.5rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .checklist li {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border-color: var(--primary);
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border-color: var(--warning);
+            color: #92400e;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border-color: var(--success);
+            color: #065f46;
+        }
+
+        .alert-danger {
+            background: #fee2e2;
+            border-color: var(--danger);
+            color: #991b1b;
+        }
+
+        .alert strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Knowledge Points */
+        .knowledge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .knowledge-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .knowledge-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+        }
+
+        .knowledge-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .knowledge-content {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--border);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 1.5rem;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 1.5rem;
+            width: 1rem;
+            height: 1rem;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px var(--border);
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .timeline-meta {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-tertiary);
+            padding: 2rem;
+            border-top: 3px solid var(--border);
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .footer-note {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                border-radius: 0;
+            }
+
+            .content {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .action-item {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                font-size: 0.875rem;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>西藏文化景點導覽筆記</h1>
+            <p class="subtitle">實地講解記錄 | 專業導遊口述整理</p>
+        </div>
+
+        <div class="content">
+            <!-- Metadata -->
+            <div class="section">
+                <h2 class="section-title">📋 導覽資訊</h2>
+                <div class="metadata">
+                    <div class="metadata-item">
+                        <span class="metadata-label">記錄日期:</span>
+                        <span class="metadata-value">2025年1月4日</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">主題:</span>
+                        <span class="metadata-value">西藏歷史文化與藏醫傳統</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">地點:</span>
+                        <span class="metadata-value">雍布拉康、桑耶寺及周邊</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">導遊:</span>
+                        <span class="metadata-value">專業西藏文化導遊</span>
+                    </div>
+                    <div class="metadata-item">
+                        <span class="metadata-label">記錄類型:</span>
+                        <span class="metadata-value">實地導覽講解記錄</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Sites -->
+            <div class="section">
+                <h2 class="section-title">🏛️ 核心景點與文化重點</h2>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">景點名稱</th>
+                            <th style="width: 30%;">歷史地位</th>
+                            <th>核心特色</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>雍布拉康宮</strong></td>
+                            <td>
+                                西藏第一座宮殿<br>
+                                建於公元前2世紀
+                            </td>
+                            <td>
+                                • 2000多年歷史<br>
+                                • 藏族起源地<br>
+                                • 猴子變人傳說<br>
+                                • 原樣式修復
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>桑耶寺</strong></td>
+                            <td>
+                                第一座佛法僧三寶具全寺廟<br>
+                                寧瑪派（紅教）祖寺
+                            </td>
+                            <td>
+                                • 蓮花生大師創建<br>
+                                • 三種建築風格融合<br>
+                                • 七位首批僧人<br>
+                                • 達官貴人子弟出家
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Key Knowledge -->
+            <div class="section">
+                <h2 class="section-title">💡 關鍵文化知識點</h2>
+                
+                <div class="knowledge-grid">
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">◆ 藏族起源傳說</div>
+                        <div class="knowledge-content">
+                            觀世音菩薩派遣神猴與羅剎女結合，繁衍出藏族人民。第一位藏王居住在雍布拉康，壁畫記錄完整傳說故事。
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">◆ 桑耶寺的命名</div>
+                        <div class="knowledge-content">
+                            「桑耶」源於松贊干布國王的驚嘆之聲。蓮花生大師在寺廟未完工前，從手掌幻化出建成後的完整景象。
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">◆ 寧瑪派（紅教）發展</div>
+                        <div class="knowledge-content">
+                            首批七位出家僧人皆為達官貴人子弟，家族背景雄厚，提供大量資源扶持，使教派迅速發展。實行「七戶養一僧」制度。
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">◆ 三種建築風格</div>
+                        <div class="knowledge-content">
+                            桑耶寺融合藏式、印度式、漢式三種建築風格，又稱「三樣寺」，展現文化交流與融合。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tibetan Medicine -->
+            <div class="section">
+                <h2 class="section-title">⚕️ 藏醫文化精華</h2>
+                
+                <h3 class="section-subtitle">診斷方法演進</h3>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-title">1. 石診（最早期方法）</div>
+                        <div class="timeline-meta"><span class="badge badge-primary">游牧時期</span></div>
+                        <p style="margin-bottom: 1rem;">針對游牧民族生活特點發展出的遠距診斷方法：</p>
+                        <ul class="bullet-list">
+                            <li><strong>取石：</strong>病人走三步撿石握手中</li>
+                            <li><strong>包裹：</strong>用酥油和哈達包裹</li>
+                            <li><strong>診斷：</strong>觀察石頭的凹陷、裂痕、顏色、紋路</li>
+                            <li><strong>治療：</strong>藏醫開藥，家人帶回服用</li>
+                        </ul>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-title">2. 尿診（第二階段方法）</div>
+                        <div class="timeline-meta"><span class="badge badge-warning">過渡時期</span></div>
+                        <p style="margin-bottom: 1rem;">藏醫通過多感官檢測尿液進行診斷：</p>
+                        <ul class="bullet-list">
+                            <li><strong>觀察：</strong>檢視尿液顏色</li>
+                            <li><strong>聞：</strong>辨別氣味</li>
+                            <li><strong>嚐：</strong>品嚐味道（酸、甜、苦等）</li>
+                            <li><strong>觸：</strong>感受質地</li>
+                        </ul>
+                        <div class="alert alert-danger">
+                            <strong>⚠️ 犧牲巨大</strong>
+                            長期從事尿診的藏醫會失明、失去嗅覺味覺，當地居民特別尊重這些犧牲奉獻的醫者。
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-title">3. 掌診（現代主流方法）</div>
+                        <div class="timeline-meta"><span class="badge badge-success">當代主流</span></div>
+                        <p style="margin-bottom: 1rem;">目前最普遍使用的診斷方法：</p>
+                        <ul class="bullet-list">
+                            <li>手掌和腳掌對應全身經絡穴位</li>
+                            <li>掌紋變化可預知潛在病症</li>
+                            <li>建議拍攝高清照片記錄，追蹤健康變化</li>
+                            <li>著重預防醫學，提前預警疾病</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3 class="section-subtitle">醫學唐卡：三棵樹體系</h3>
+                <div class="alert alert-info">
+                    <strong>💡 核心知識</strong>
+                    藏醫學的核心知識濃縮在三幅醫學唐卡中。完全理解這三棵樹，即可成為資深藏醫。
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">唐卡名稱</th>
+                            <th>內容說明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>🌳 第一棵樹</strong></td>
+                            <td>生命樹 - 描述人體生理功能和病理變化</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🌳 第二棵樹</strong></td>
+                            <td>診斷樹 - 說明診斷方法，包括脈診、七脈輪等</td>
+                        </tr>
+                        <tr>
+                            <td><strong>🌳 第三棵樹</strong></td>
+                            <td>治療樹 - 講解治療方法與藥物使用</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info">
+                    <strong>💡 學習建議</strong>
+                    可在網路搜尋「藏醫三棵樹」或「醫學唐卡」欣賞這些珍貴的醫學藝術品。
+                </div>
+            </div>
+
+            <!-- Health Tips -->
+            <div class="section">
+                <h2 class="section-title">🏔️ 高原健康要點</h2>
+                
+                <h3 class="section-subtitle">高海拔對身體的影響</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">西藏平均海拔超過4000米，高原環境對人體會產生特殊影響：</p>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">生理影響</th>
+                            <th>具體表現</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>大腦缺氧</td>
+                            <td>思維遲緩、記憶力下降、拿著東西找東西</td>
+                        </tr>
+                        <tr>
+                            <td>心率變化</td>
+                            <td>心跳變慢（導遊實例：52-53次/分鐘）</td>
+                        </tr>
+                        <tr>
+                            <td>心臟變化</td>
+                            <td>心臟膨脹以適應高原（如膨脹的林鼠）</td>
+                        </tr>
+                        <tr>
+                            <td>器官膨脹</td>
+                            <td>放大潛在小病痛，提前預警健康問題</td>
+                        </tr>
+                        <tr>
+                            <td>症狀顯現</td>
+                            <td>平時不明顯的腰酸、頸部不適會浮現</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 class="section-subtitle">藏族傳統壽命與改善</h3>
+                <div class="card">
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="color: var(--primary);">歷史平均壽命：</strong>約40歲
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <strong style="color: var(--primary);">主要原因：</strong>
+                        <ul class="bullet-list">
+                            <li>高海拔環境導致生理機能下降</li>
+                            <li>缺乏醫療資源，疾病自生自滅</li>
+                            <li>天花等被視為不治之症，病人被遺棄荒島</li>
+                            <li>藥師佛信仰提供心理安慰</li>
+                        </ul>
+                    </div>
+                    <div class="alert alert-success">
+                        <strong>✓ 現代改善</strong>
+                        藏醫藥發展、注重預防醫學。奇怪病症發生率：西藏10% vs 內地20%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Items -->
+            <div class="section">
+                <h2 class="section-title">✅ 重要建議與行動項目</h2>
+                
+                <div class="action-grid">
+                    <div class="action-item">
+                        <div class="action-category">心態調整</div>
+                        <div class="action-description">保持樂觀，不過度擔心高原反應。心態好了，什麼都好了。</div>
+                        <div class="priority">★★★★★</div>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-category">行前準備</div>
+                        <div class="action-description">準備舒適衣物、防曬用品、零錢（供養用）</div>
+                        <div class="priority">★★★★☆</div>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-category">參觀禮儀</div>
+                        <div class="action-description">進寺廟前摘帽和墨鏡、不單手指佛像、不觸摸佛像壁畫</div>
+                        <div class="priority">★★★★★</div>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-category">健康管理</div>
+                        <div class="action-description">多喝水、避免劇烈運動、充足休息、不熬夜</div>
+                        <div class="priority">★★★★★</div>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-category">文化體驗</div>
+                        <div class="action-description">可體驗藏醫掌診，拍攝手掌高清照片追蹤健康</div>
+                        <div class="priority">★★★☆☆</div>
+                    </div>
+
+                    <div class="action-item">
+                        <div class="action-category">供養文化</div>
+                        <div class="action-description">隨心供養，可點燈或現金，無固定金額要求</div>
+                        <div class="priority">★★★☆☆</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cultural Insights -->
+            <div class="section">
+                <h2 class="section-title">🙏 關鍵文化洞察</h2>
+                
+                <div class="knowledge-grid">
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">✓ 藏族信仰核心</div>
+                        <div class="knowledge-content">
+                            不求今生，只求來世。今生遭遇皆為前世因果。拜佛求的是心理安定與克服困難的力量。
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">✓ 「佛菩薩」的真諦</div>
+                        <div class="knowledge-content">
+                            真正的佛菩薩是在你迷茫時給予指引的人。每個在關鍵時刻幫助你的人，就是你的佛菩薩。
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">✓ 友善文化</div>
+                        <div class="knowledge-content">
+                            藏族是友善的民族，但前提是你對他們友善。人是相互的，以誠待人自然獲得誠意回報。
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">✓ 供養制度演變</div>
+                        <div class="knowledge-content">
+                            早期：七戶養一僧<br>
+                            現代：政府撥款 + 門票收入 + 信眾供養<br>
+                            在編僧人如公職人員領工資
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <div class="knowledge-title">✓ 藏醫的犧牲精神</div>
+                        <div class="knowledge-content">
+                            尿診藏醫因長期工作失明、失去嗅覺味覺。當地居民特別尊重這些犧牲奉獻的醫者。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checklist -->
+            <div class="section">
+                <h2 class="section-title">📝 參觀須知檢查清單</h2>
+                
+                <h3 class="section-subtitle">寺廟禮儀</h3>
+                <ul class="checklist">
+                    <li>進大殿前摘下帽子和墨鏡（眼鏡可保留）</li>
+                    <li>不可單手指佛像（用手掌或五指併攏）</li>
+                    <li>不可隨意觸摸佛像或壁畫</li>
+                    <li>保持安靜，尊重僧侶和信眾</li>
+                    <li>拍照前先徵詢許可</li>
+                </ul>
+
+                <h3 class="section-subtitle">健康注意</h3>
+                <ul class="checklist">
+                    <li>多喝水保持水分</li>
+                    <li>動作放慢，避免劇烈運動</li>
+                    <li>充足休息，不熬夜</li>
+                    <li>輕微不適不過度緊張（身體預警）</li>
+                    <li>保持樂觀心態最重要</li>
+                </ul>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="section">
+                <h2 class="section-title">🎯 後續學習與探索</h2>
+                
+                <div class="card">
+                    <div class="card-header">1. 深度研究</div>
+                    <p>搜尋「藏醫三棵樹」、「醫學唐卡」欣賞珍貴醫學藝術品</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">2. 文化體驗</div>
+                    <p>參觀布達拉宮、羅布林卡觀賞壁畫，了解完整藏族起源故事</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">3. 健康管理</div>
+                    <p>拍攝手掌高清照片，建立健康基線，方便日後追蹤變化</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">4. 文化尊重</div>
+                    <p>持續學習藏族文化禮儀，以開放尊重的心態進行文化交流</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>資料來源：</strong>西藏專業導遊實地講解 | <strong>記錄時間：</strong>2025年1月</p>
+            <p><strong>適用對象：</strong>西藏文化深度旅遊愛好者、旅行社規劃人員</p>
+            <p class="footer-note">
+                ⚠️ 本筆記基於導遊口述整理，具體景點開放時間、門票價格等資訊請以實際為準。<br>
+                建議行前再次確認最新旅遊政策與健康建議。
+            </p>
+        </div>
+    </div>
+</body>
+</html>
