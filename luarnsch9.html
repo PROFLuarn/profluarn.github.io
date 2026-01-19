@@ -29,11 +29,10 @@
             margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw;
         }
         
-        /* 背景層級管理 */
         .bg-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            transition: opacity 0.8s ease-in-out; /* 平滑切換動畫 */
+            transition: opacity 0.8s ease-in-out;
         }
         
         .glass-texture {
@@ -50,7 +49,6 @@
             box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
         }
 
-        /* 視覺反饋動畫 */
         @keyframes flash-feedback {
             0% { background-color: rgba(255,255,255,0.1); }
             50% { background-color: rgba(255, 0, 100, 0.5); }
@@ -58,7 +56,6 @@
         }
         .color-changed { animation: flash-feedback 0.3s ease-out; }
 
-        /* 文字變色動畫 */
         @keyframes pastel-shift {
             0%, 100% { color: #ffffff !important; text-shadow: 0 0 30px rgba(255,255,255,0.6); }
             16% { color: #ff1493 !important; text-shadow: 0 0 40px rgba(255,20,147,0.9); }
@@ -68,11 +65,15 @@
             83% { color: #ff6347 !important; text-shadow: 0 0 40px rgba(255,99,71,0.9); }
         }
         
-        /* 讓 Three.js Canvas 在手機上也正常顯示 */
+        /* Custom Scrollbar for Right Schedule */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+
         canvas { display: block !important; }
         #video-input { display: none; }
         
-        /* 響應式調整 */
         @media (max-width: 768px) {
             .title-area { position: relative !important; top: 0 !important; left: 0 !important; right: 0 !important; }
             .avatar-box { position: relative !important; top: 0 !important; left: 0 !important; width: 100% !important; display: flex !important; justify-content: center !important; }
@@ -112,7 +113,7 @@
           { id: '3', btnName: '打掃時間', title: '環境清掃', subtitle: '維護校園整潔，大家動起來' },
         ];
 
-        // Bubble Background Logic (Pure JS for Canvas)
+        // Bubble Background Logic
         class BubbleSystem {
             constructor(canvas) {
                 this.canvas = canvas;
@@ -165,7 +166,6 @@
                 ctx.fillStyle = g;
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.fill();
-                // Highlight
                 ctx.beginPath();
                 ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.08, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.5})`; 
@@ -184,10 +184,9 @@
             const [status, setStatus] = useState("初始化...");
             const [gesture, setGesture] = useState("等待手勢");
             const [currentShape, setCurrentShape] = useState("FIREWORKS");
-            const [isActive, setIsActive] = useState(false); // 控制背景切換的關鍵狀態
+            const [isActive, setIsActive] = useState(false); 
 
             useEffect(() => {
-                // --- 1. Init Bubble Background ---
                 const bubbleSys = new BubbleSystem(bubbleCanvasRef.current);
                 let bubbleAnimId;
                 const renderBubbles = () => {
@@ -199,7 +198,6 @@
                 const handleResize = () => bubbleSys.resize();
                 window.addEventListener('resize', handleResize);
 
-                // --- 2. Init Three.js Particles ---
                 let renderer, scene, camera, particles, geometry;
                 let particleAnimId;
                 const particleCount = 4500;
@@ -216,11 +214,9 @@
                     renderer.setSize(window.innerWidth, window.innerHeight);
                     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                     
-                    // Clear and append
                     while(container.firstChild) container.removeChild(container.firstChild);
                     container.appendChild(renderer.domElement);
 
-                    // Geometry
                     geometry = new THREE.BufferGeometry();
                     const positions = new Float32Array(particleCount * 3);
                     const colors = new Float32Array(particleCount * 3);
@@ -244,7 +240,6 @@
                 };
                 initThree();
 
-                // Shapes Logic
                 const shapes = {
                     heart: (i) => {
                         const t = Math.random() * Math.PI * 2;
@@ -303,7 +298,6 @@
                     attr.needsUpdate = true;
                 };
 
-                // Three.js Animation Loop
                 const clock = new THREE.Clock();
                 const renderParticles = () => {
                     particleAnimId = requestAnimationFrame(renderParticles);
@@ -323,7 +317,6 @@
                 };
                 renderParticles();
 
-                // --- 3. MediaPipe Hands ---
                 let gestureDebounce = 0;
                 let lastGesture = 'none';
                 let cameraUtils = null;
@@ -335,33 +328,27 @@
                     setStatus("偵測中...");
                     const miniCanvas = miniHandCanvasRef.current;
                     const miniCtx = miniCanvas.getContext('2d');
-                    
-                    // Clear mini canvas
                     miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
 
                     if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                        setIsActive(true); // Hand detected -> Switch to Particles
+                        setIsActive(true);
                         
-                        // Draw Skeleton on Mini Canvas
                         const landmarks = results.multiHandLandmarks[0];
                         miniCtx.save();
-                        // Draw connectors
                         drawConnectors(miniCtx, landmarks, HAND_CONNECTIONS, {color: '#00ff88', lineWidth: 2});
-                        // Draw landmarks
                         drawLandmarks(miniCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
                         miniCtx.restore();
 
-                        // Gesture Logic
                         const lm = landmarks;
                         const palmSize = Math.sqrt(Math.pow(lm[0].x - lm[9].x, 2) + Math.pow(lm[0].y - lm[9].y, 2));
                         const targetScale = 0.5 + (palmSize * 6);
                         handScale += (targetScale - handScale) * 0.1;
 
-                        const tips = [8, 12, 16, 20]; const mcp = [5, 9, 13, 17];
+                        const tips = [8, 12, 16, 20]; 
                         let openScore = 0;
                         for(let i=0; i<4; i++) {
                             const tipToWrist = Math.sqrt(Math.pow(lm[tips[i]].x - lm[0].x, 2) + Math.pow(lm[tips[i]].y - lm[0].y, 2));
-                            const mcpToWrist = Math.sqrt(Math.pow(lm[mcp[i]].x - lm[0].x, 2) + Math.pow(lm[mcp[i]].y - lm[0].y, 2));
+                            const mcpToWrist = Math.sqrt(Math.pow(lm[5 + i*4].x - lm[0].x, 2) + Math.pow(lm[5 + i*4].y - lm[0].y, 2));
                             if (tipToWrist > mcpToWrist * 1.3) openScore++;
                         }
 
@@ -390,7 +377,7 @@
                         lastGesture = currentGesture;
 
                     } else {
-                        setIsActive(false); // No Hand -> Switch to Bubbles
+                        setIsActive(false);
                         setGesture("未偵測到手部");
                         handScale += (1.0 - handScale) * 0.05;
                     }
@@ -412,59 +399,23 @@
 
             return (
                 <>
-                    {/* Layer 1: Bubble Background (Show when !isActive) */}
-                    <canvas 
-                        ref={bubbleCanvasRef} 
-                        className="bg-layer z-0" 
-                        style={{ opacity: isActive ? 0 : 1 }}
-                    />
-
-                    {/* Layer 2: Three.js Particles (Show when isActive) */}
-                    <div 
-                        ref={threeContainerRef} 
-                        className="bg-layer z-[1]" 
-                        style={{ 
-                            opacity: isActive ? 1 : 0, 
-                            background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)',
-                            pointerEvents: 'none'
-                        }} 
-                    />
-
+                    <canvas ref={bubbleCanvasRef} className="bg-layer z-0" style={{ opacity: isActive ? 0 : 1 }} />
+                    <div ref={threeContainerRef} className="bg-layer z-[1]" style={{ opacity: isActive ? 1 : 0, background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)', pointerEvents: 'none' }} />
                     <video ref={videoRef} id="video-input" playsInline></video>
                     
-                    {/* UI Overlay: Mini Map & Status */}
                     <div className="fixed top-4 right-4 z-[50] flex flex-col items-end gap-2 pointer-events-none">
                         <div id="gesture-feedback-box" className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-lg transition-colors duration-300 w-44 pointer-events-auto">
                             <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
-                                <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">
-                                    {isActive ? "HAND DETECTED" : "IDLE MODE"}
-                                </span>
+                                <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{isActive ? "HAND DETECTED" : "IDLE MODE"}</span>
                                 <div className={`w-2 h-2 rounded-full transition-colors duration-500 ${isActive ? 'bg-green-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-600'}`}></div>
                             </div>
-                            
-                            {/* Mini Skeleton Canvas */}
                             <div className="flex justify-center bg-black/20 rounded-lg mb-2 overflow-hidden h-24 relative border border-white/5">
-                                <canvas 
-                                    ref={miniHandCanvasRef} 
-                                    width="160" height="120" 
-                                    className="w-full h-full object-contain"
-                                />
-                                {!isActive && (
-                                    <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-600">
-                                        等待手勢...
-                                    </div>
-                                )}
+                                <canvas ref={miniHandCanvasRef} width="160" height="120" className="w-full h-full object-contain" />
+                                {!isActive && <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-600">等待手勢...</div>}
                             </div>
-
                             <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                    <div className="text-slate-500 scale-75 origin-top-left">GESTURE</div>
-                                    <div className="font-mono font-bold text-cyan-400 truncate">{gesture}</div>
-                                </div>
-                                <div>
-                                    <div className="text-slate-500 scale-75 origin-top-left">SHAPE</div>
-                                    <div className="font-mono font-bold text-pink-400 truncate">{currentShape}</div>
-                                </div>
+                                <div><div className="text-slate-500 scale-75 origin-top-left">GESTURE</div><div className="font-mono font-bold text-cyan-400 truncate">{gesture}</div></div>
+                                <div><div className="text-slate-500 scale-75 origin-top-left">SHAPE</div><div className="font-mono font-bold text-pink-400 truncate">{currentShape}</div></div>
                             </div>
                         </div>
                     </div>
@@ -472,7 +423,7 @@
             );
         }
 
-        // TodaySchedule Component
+        // TodaySchedule Component (Optimized Layout with Badge on next line, right aligned)
         function TodaySchedule({ slots, timetable, now }) {
           const today = now.getDay();
           const todayName = DAYS_ZH[today];
@@ -481,7 +432,7 @@
           const currentTime = `${currentHour}:${currentMinute}`;
 
           return (
-            <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 z-30 w-56">
+            <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 z-30 w-48">
               <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl max-h-[85vh] overflow-y-auto">
                 <div className="text-center mb-3 sticky top-0 bg-black/60 backdrop-blur-md py-1.5 rounded-lg -mx-3 px-3">
                   <h3 style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-base font-black mb-0.5">
@@ -500,30 +451,27 @@
                       <div 
                         key={slot.id}
                         className={`p-2 rounded-lg border transition-all duration-300 ${
-                          isNow 
-                            ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 border-pink-400 scale-105 shadow-lg shadow-pink-500/30' 
-                            : isPast
-                            ? 'bg-white/5 border-white/10 opacity-40'
-                            : 'bg-white/10 border-white/20'
+                          isNow ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 border-pink-400 scale-105 shadow-lg shadow-pink-500/30' : 
+                          isPast ? 'bg-white/5 border-white/10 opacity-40' : 'bg-white/10 border-white/20'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-0.5">
-                          <span className={`font-bold text-[10px] ${isNow ? 'text-pink-300' : 'text-slate-400'}`}>
-                            {slot.name}
-                          </span>
-                          {isNow && (
-                            <span className="px-1.5 py-0.5 bg-pink-500 text-white text-[8px] font-black rounded-full animate-pulse">
-                              進行中
-                            </span>
-                          )}
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-baseline gap-1">
+                              <span className={`font-bold text-xs ${isNow ? 'text-pink-300' : 'text-slate-400'}`}>{slot.name}</span>
+                              <span className={`text-[10px] font-mono ${isNow ? 'text-pink-200' : 'text-slate-500'}`}>{slot.start}-{slot.end}</span>
+                          </div>
                         </div>
                         
-                        <div style={{animation: isNow ? 'pastel-shift 12s ease-in-out infinite' : 'none', color: '#ffffff'}} className={`text-sm font-black mb-0.5`}>
-                          {subject}
-                        </div>
-                        
-                        <div className={`text-[9px] ${isNow ? 'text-pink-200' : 'text-slate-500'}`}>
-                          {slot.start} - {slot.end}
+                        {/* 修正：將標籤與課程名稱分開，標籤置於右側 */}
+                        <div className="flex justify-between items-center min-h-[1.25rem]">
+                            <div style={{animation: isNow ? 'pastel-shift 12s ease-in-out infinite' : 'none', color: '#ffffff'}} className={`text-sm font-black flex-1 leading-tight`}>
+                              {subject}
+                            </div>
+                            {isNow && (
+                                <span className="ml-2 px-2 py-0.5 bg-pink-500 text-white text-[9px] font-black rounded-full animate-pulse whitespace-nowrap shadow-lg shadow-pink-500/50">
+                                  進行中
+                                </span>
+                            )}
                         </div>
                       </div>
                     );
@@ -534,20 +482,107 @@
           );
         }
 
-        // RightSchedule Component
+        // RightSchedule Component (Fixed Parsing Logic)
         function RightSchedule({ events, onRefresh, isRefreshing }) {
-          const eventLines = events ? events.split('\n').filter(line => line.trim() !== '') : [];
+          const getFormattedDate = (offset = 0) => {
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+          };
+
+          const todayStr = getFormattedDate(0);
+          const tomorrowStr = getFormattedDate(1);
+          const dayAfterStr = getFormattedDate(2);
+
+          // 新的解析邏輯：不依賴換行符號，而是用 Regex 抓取 "日期 時間 內容" 模式
+          const parseAllEvents = (rawText) => {
+            if (!rawText) return [];
+            // Regex: 抓取 MM/DD 或 M/D (group 1), 時間 HH:MM (group 2), 內容 (group 3)
+            // Lookahead 確保抓到下一個日期開頭為止
+            const regex = /(\d{1,2}[/-]\d{1,2})\s+(\d{1,2}[:：]\d{2})\s+(.*?)(?=\s*\d{1,2}[/-]\d{1,2}\s+\d{1,2}[:：]\d{2}|$)/gs;
+            const matches = [...rawText.matchAll(regex)];
+            
+            return matches.map(match => {
+                let datePart = match[1].replace('-', '/');
+                const [m, d] = datePart.split('/');
+                const formattedDate = `${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+                
+                return {
+                    isParsed: true,
+                    date: formattedDate,
+                    time: match[2].replace('：', ':'),
+                    content: match[3].trim().replace(/[*#]/g, '')
+                };
+            });
+          };
+
+          // 判斷是否為無格式的長字串，還是有換行的列表
+          let parsedEvents = [];
+          if (events && events.includes('\n')) {
+             // 嘗試舊的行解析 (如果 n8n 乖乖換行)
+             parsedEvents = events.split('\n').filter(l => l.trim()).map(line => {
+                 const match = line.match(/(\d{1,2}[/-]\d{1,2})\s+(\d{1,2}:\d{2})\s+(.*)/);
+                 if(match) {
+                     let datePart = match[1].replace('-', '/');
+                     const [m, d] = datePart.split('/');
+                     return { isParsed: true, date: `${m.padStart(2,'0')}/${d.padStart(2,'0')}`, time: match[2], content: match[3].replace(/[*#]/g, '') };
+                 }
+                 return { isParsed: false, text: line };
+             });
+          } else {
+             // 如果是一長串，使用新的 Regex 解析
+             parsedEvents = parseAllEvents(events || "");
+          }
+          
+          // 如果解析結果還是空的（例如根本沒有匹配到日期），但有內容，就當作純文字顯示在「其他」
+          if (parsedEvents.length === 0 && events && events.trim().length > 0 && events !== '本日尚無重要行事。') {
+              parsedEvents = [{ isParsed: false, text: events }];
+          }
+
+          const grouped = {
+            today: parsedEvents.filter(e => e.isParsed && e.date === todayStr),
+            tomorrow: parsedEvents.filter(e => e.isParsed && e.date === tomorrowStr),
+            dayAfter: parsedEvents.filter(e => e.isParsed && e.date === dayAfterStr),
+            others: parsedEvents.filter(e => !e.isParsed || (e.date !== todayStr && e.date !== tomorrowStr && e.date !== dayAfterStr))
+          };
+
+          const renderSection = (title, items, icon) => (
+            <div className="mb-3 last:mb-0">
+                <div className="flex items-center gap-2 mb-1.5 px-1">
+                    <i className={`fas ${icon} text-[10px] text-slate-400`}></i>
+                    <span className="text-[10px] font-bold text-slate-300 tracking-wider uppercase">{title}</span>
+                </div>
+                {items.length > 0 ? (
+                    <div className="space-y-1.5">
+                        {items.map((item, idx) => (
+                            <div key={idx} className="p-2.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex flex-col gap-0.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-mono text-cyan-300 bg-cyan-900/30 px-1.5 py-0.5 rounded border border-cyan-500/20">{item.time}</span>
+                                </div>
+                                <div style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-xs font-bold leading-tight mt-1">
+                                    {item.content}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-2 text-center border border-white/5 rounded-lg border-dashed">
+                        <span className="text-[10px] text-slate-600">無行程</span>
+                    </div>
+                )}
+            </div>
+          );
 
           return (
             <div className="hidden lg:block fixed right-4 top-1/2 -translate-y-1/2 z-30 w-64">
-              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl max-h-[85vh] overflow-y-auto flex flex-col h-full">
-                <div className="text-center mb-3 sticky top-0 bg-black/60 backdrop-blur-md py-1.5 rounded-lg -mx-3 px-3 flex items-center justify-between">
+              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl max-h-[85vh] overflow-y-auto flex flex-col h-full custom-scrollbar">
+                <div className="text-center mb-3 sticky top-0 bg-black/60 backdrop-blur-md py-1.5 rounded-lg -mx-3 px-3 flex items-center justify-between z-10">
                    <div className="flex-1"></div>
                    <div className="text-center flex-1">
                       <h3 style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-base font-black mb-0.5 whitespace-nowrap">
                         行事曆
                       </h3>
-                      <p className="text-[10px] text-slate-400">校務行程</p>
+                      <p className="text-[10px] text-slate-400">未來三日</p>
                    </div>
                    <div className="flex-1 flex justify-end">
                       <button 
@@ -561,29 +596,33 @@
                    </div>
                 </div>
                 
-                <div className="space-y-2">
-                  {isRefreshing ? (
-                    <div className="p-4 text-center text-slate-400 text-xs animate-pulse">
-                       正在同步最新資料...
-                    </div>
-                  ) : eventLines.length === 0 ? (
-                    <div className="p-4 text-center bg-white/5 rounded-lg border border-white/10">
-                       <span className="text-slate-400 text-sm font-bold">無</span>
-                       <p className="text-[10px] text-slate-500 mt-1">目前沒有排定行程</p>
-                    </div>
-                  ) : (
-                    eventLines.map((line, index) => (
-                      <div 
-                        key={index}
-                        className="p-3 rounded-lg border bg-white/10 border-white/20 hover:bg-white/15 transition-all"
-                      >
-                        <div style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-sm font-bold leading-relaxed whitespace-pre-wrap">
-                          {line}
+                {isRefreshing ? (
+                    <div className="flex-1 flex items-center justify-center min-h-[200px]">
+                        <div className="text-center text-slate-400 text-xs animate-pulse">
+                           <i className="fas fa-circle-notch fa-spin mb-2 text-xl"></i><br/>
+                           正在同步...
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                    </div>
+                ) : (
+                    <div className="pb-2">
+                        {renderSection(`今天 (${todayStr})`, grouped.today, "fa-calendar-day")}
+                        {renderSection(`明天 (${tomorrowStr})`, grouped.tomorrow, "fa-sun")}
+                        {renderSection(`後天 (${dayAfterStr})`, grouped.dayAfter, "fa-forward")}
+                        
+                        {grouped.others.length > 0 && (
+                            <div className="mt-4 pt-3 border-t border-white/10">
+                                <div className="text-[9px] font-bold text-slate-500 mb-2 px-1">其他 / 待確認</div>
+                                <div className="space-y-1">
+                                    {grouped.others.map((item, idx) => (
+                                        <div key={idx} className="text-[10px] text-slate-400 p-1.5 bg-white/5 rounded break-all">
+                                            {item.isParsed ? `${item.date} ${item.time} ${item.content}` : item.text}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
               </div>
             </div>
           );
@@ -642,13 +681,21 @@
           const [isFullScreen, setIsFullScreen] = useState(false);
 
           useEffect(() => {
-            const handleFullScreenChange = () => setIsFullScreen(!!document.fullscreenElement);
-            ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(
-                e => document.addEventListener(e, handleFullScreenChange)
-            );
-            return () => ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(
-                e => document.removeEventListener(e, handleFullScreenChange)
-            );
+            const handleFullScreenChange = () => {
+              setIsFullScreen(!!document.fullscreenElement);
+            };
+
+            document.addEventListener('fullscreenchange', handleFullScreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+            document.addEventListener('mozfullscreenchange', handleFullScreenChange);
+            document.addEventListener('MSFullscreenChange', handleFullScreenChange);
+
+            return () => {
+              document.removeEventListener('fullscreenchange', handleFullScreenChange);
+              document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
+              document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
+              document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
+            };
           }, []);
 
           const toggleFullScreen = () => {
@@ -657,12 +704,15 @@
                 console.error(`Error attempting to enable full-screen mode: ${err.message}`);
               });
             } else {
-              if (document.exitFullscreen) document.exitFullscreen();
+              if (document.exitFullscreen) {
+                document.exitFullscreen();
+              }
             }
           };
 
           return (
             <div className="p-4 md:p-8 glass-texture border-t border-white/10 relative z-20">
+              {/* 主要按鈕區域 */}
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-3 md:mb-0">
                 <button 
                     onClick={onOpenBroadcast}
@@ -727,6 +777,7 @@
                 </button>
               </div>
 
+              {/* 設定按鈕區域 */}
               <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 mt-3 md:mt-0 md:absolute md:right-8 md:top-1/2 md:-translate-y-1/2">
                 <button 
                     onClick={toggleFullScreen}
@@ -1167,12 +1218,13 @@
             setIsRefreshingCalendar(true);
 
             try {
+              // 修改請求內容，強制要求純文字格式與無Markdown
               const response = await fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                   action: "query_calendar", 
-                  query: "請查詢我的行事曆，給我今天、明天與後天的全部行程。輸出的結果請務必包含今日、明日與後天，並適當換行呈現。",
+                  query: "請查詢我的行事曆(含今天、明天、後天)。請回傳純文字列表，每一行格式為：'MM/DD HH:mm 行程內容'。例如 '11/25 09:30 開會'。若無行程請回傳'無'。請勿包含任何Markdown標記或其他解釋性文字。",
                   time: new Date().toISOString() 
                 }),
                 mode: 'cors',
@@ -1451,7 +1503,7 @@
 
               {/* 桌面版：原始佈局 */}
               <div className="hidden md:block">
-                <div className="title-area absolute top-8 left-0 right-0 lg:left-60 lg:right-64 z-20 flex flex-col items-center pointer-events-none">
+                <div className="title-area absolute top-8 left-0 right-0 lg:left-52 lg:right-64 z-20 flex flex-col items-center pointer-events-none">
                   <div className="flex flex-col items-center">
                       {/* 頭像 + 合併後的標題 */}
                       <div className="flex items-center gap-6 drop-shadow-2xl mb-4 pointer-events-auto">
@@ -1469,7 +1521,7 @@
                   </div>
                 </div>
 
-                <main className="relative z-10 h-screen flex flex-col lg:ml-60 lg:mr-64">
+                <main className="relative z-10 h-screen flex flex-col lg:ml-52 lg:mr-64">
                   <div className="flex-grow flex items-center justify-center p-8">
                     <MainDisplay 
                       now={now} 
