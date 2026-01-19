@@ -727,21 +727,37 @@
           );
         }
 
-        // Toolbar Component
+        // Toolbar Component with Hover-to-Reveal Logic
         function Toolbar({ onOpenBroadcast, onOpenSettings, onOpenTravel, onQuickAction }) {
+          const [isVisible, setIsVisible] = useState(false);
           const [isFullScreen, setIsFullScreen] = useState(false);
 
+          // Handle Mouse Movement to reveal/hide toolbar
           useEffect(() => {
+            const handleMouseMove = (e) => {
+              // Get the threshold (bottom 150px of the screen)
+              const threshold = window.innerHeight - 150;
+              
+              // If mouse is below threshold, show toolbar
+              if (e.clientY > threshold) {
+                setIsVisible(true);
+              } else {
+                setIsVisible(false);
+              }
+            };
+
             const handleFullScreenChange = () => {
               setIsFullScreen(!!document.fullscreenElement);
             };
 
+            window.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('fullscreenchange', handleFullScreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
             document.addEventListener('mozfullscreenchange', handleFullScreenChange);
             document.addEventListener('MSFullscreenChange', handleFullScreenChange);
 
             return () => {
+              window.removeEventListener('mousemove', handleMouseMove);
               document.removeEventListener('fullscreenchange', handleFullScreenChange);
               document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
               document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
@@ -762,7 +778,11 @@
           };
 
           return (
-            <div className="p-4 md:p-8 glass-texture border border-white/10 relative z-20 md:mx-10 md:mb-10 md:rounded-[2.5rem]">
+            <div 
+                className={`p-4 md:p-8 glass-texture border border-white/10 fixed bottom-0 left-0 right-0 z-50 md:mx-10 md:mb-24 md:rounded-[2.5rem] transition-all duration-500 ease-in-out transform ${
+                    isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0 pointer-events-none'
+                }`}
+            >
               {/* 主要按鈕區域 */}
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-3 md:mb-0">
                 <button 
