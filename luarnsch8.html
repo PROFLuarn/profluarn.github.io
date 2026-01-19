@@ -23,7 +23,7 @@
         :root { --bg-deep: #020617; }
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: #000000; /* 改為純黑底色以配合粒子 */
+            background-color: #000000;
             color: white;
             margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw;
         }
@@ -229,6 +229,11 @@
                     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                     renderer.setSize(window.innerWidth, window.innerHeight);
                     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                    
+                    // 重點修正：將渲染器加到 div 容器中，而不是 canvas 標籤內
+                    while(container.firstChild){
+                        container.removeChild(container.firstChild);
+                    }
                     container.appendChild(renderer.domElement);
 
                     const particleCount = 4500;
@@ -482,7 +487,8 @@
 
             return (
                 <>
-                    <canvas ref={containerRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)' }} />
+                    {/* 這裡改為 div */}
+                    <div ref={containerRef} className="fixed inset-0 z-[1] pointer-events-none" style={{ background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)' }} />
                     <video ref={videoRef} id="video-input" playsInline style={{ display: 'none' }}></video>
                     
                     {/* Gesture UI Overlay (Fixed Top Right) */}
