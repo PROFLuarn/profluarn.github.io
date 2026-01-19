@@ -114,6 +114,30 @@
           { id: '3', btnName: '打掃時間', title: '環境清掃', subtitle: '維護校園整潔，大家動起來' },
         ];
 
+        // --- Helper Functions for Google Drive Images ---
+        function extractFileId(url) {
+            if (!url) return null;
+            const patterns = [
+                /\/file\/d\/([a-zA-Z0-9_-]+)/,     // /file/d/FILE_ID/view
+                /\/d\/([a-zA-Z0-9_-]+)/,           // /d/FILE_ID
+                /id=([a-zA-Z0-9_-]+)/,             // ?id=FILE_ID
+                /\/open\?id=([a-zA-Z0-9_-]+)/      // /open?id=FILE_ID
+            ];
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+
+        function buildThumbnailUrl(fileId, size = 500) {
+            if (!fileId) return null;
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+        }
+        // ----------------------------------------------
+
         // Bubble Background Logic
         class BubbleSystem {
             constructor(canvas) {
@@ -607,8 +631,8 @@
                         {/* 明天 - 琥珀黃 (Amber) - 修正為更明顯的對比色 */}
                         {renderSection(`明天 (${tomorrowStr})`, grouped.tomorrow, "fa-sun", "bg-amber-500/10 border-amber-500/20 text-amber-100")}
                         
-                        {/* 後天 - 靛藍 (Indigo) - 冷色調區隔 */}
-                        {renderSection(`後天 (${dayAfterStr})`, grouped.dayAfter, "fa-forward", "bg-indigo-500/10 border-indigo-500/20 text-indigo-100")}
+                        {/* 後天 - 馬卡龍綠 (Macaron Green/Emerald) */}
+                        {renderSection(`後天 (${dayAfterStr})`, grouped.dayAfter, "fa-forward", "bg-emerald-400/15 border-emerald-400/30 text-emerald-100")}
                         
                         {grouped.others.length > 0 && (
                             <div className="mt-4 pt-3 border-t border-white/10">
@@ -672,9 +696,9 @@
 
               {/* Photos & Date Container - Revised for Better Mobile Visibility */}
               <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
-                 {/* 左側照片 (Mobile: Top) */}
+                 {/* 左側照片 - 尺寸放大2倍 (w-40/h-40 ~ w-64/h-64) */}
                  {photos[0] && (
-                     <div className="w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 rounded-2xl overflow-hidden border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] transform rotate-[-3deg] hover:rotate-0 transition-all duration-500 order-1 md:order-none">
+                     <div className="w-40 h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] transform rotate-[-3deg] hover:rotate-0 transition-all duration-500 order-1 md:order-none">
                          <img src={photos[0]} className="w-full h-full object-cover" alt="Daily 1" />
                      </div>
                  )}
@@ -683,9 +707,9 @@
                     {dateStr}
                  </div>
 
-                 {/* 右側照片 (Mobile: Bottom) */}
+                 {/* 右側照片 - 尺寸放大2倍 (w-40/h-40 ~ w-64/h-64) */}
                  {photos[1] && (
-                     <div className="w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32 rounded-2xl overflow-hidden border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] transform rotate-[3deg] hover:rotate-0 transition-all duration-500 order-3 md:order-none">
+                     <div className="w-40 h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] transform rotate-[3deg] hover:rotate-0 transition-all duration-500 order-3 md:order-none">
                          <img src={photos[1]} className="w-full h-full object-cover" alt="Daily 2" />
                      </div>
                  )}
@@ -1230,41 +1254,69 @@
           const [isTravelModalOpen, setIsTravelModalOpen] = useState(false);
           const [showCorsWarning, setShowCorsWarning] = useState(false);
 
-          // 新增：抓取照片的功能
+          // === 使用 drive_images_debug.html 的邏輯抓取照片 ===
           const fetchPhotos = useCallback(async () => {
+              console.log("🚀 開始抓取照片 (Structured Mode)...");
+
               try {
                   let response;
                   try {
-                       // 嘗試直接抓取
                        response = await fetch(N8N_PHOTO_WEBHOOK_URL);
                        if (!response.ok) throw new Error("Direct fetch failed");
                   } catch (e) {
-                       console.log("Direct photo fetch failed, trying proxy...", e);
-                       // 如果失敗 (通常是 CORS)，使用 proxy
-                       response = await fetch(`https://corsproxy.io/?${encodeURIComponent(N8N_PHOTO_WEBHOOK_URL)}`);
+                       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(N8N_PHOTO_WEBHOOK_URL)}`;
+                       response = await fetch(proxyUrl);
                   }
 
-                  if (response && response.ok) {
-                      const data = await response.json();
-                      let extractedUrls = [];
-                      // 處理不同格式的回傳資料 (Array 或 Object)
-                      if (Array.isArray(data)) {
-                          extractedUrls = data.map(item => (typeof item === 'string' ? item : item.url || item.img || item.src)).filter(Boolean);
-                      } else if (data.images) {
-                          extractedUrls = data.images;
-                      } else if (typeof data === 'object') {
-                          // 嘗試從物件中找出 URL 字串
-                           extractedUrls = Object.values(data).filter(val => typeof val === 'string' && val.startsWith('http'));
+                  const data = await response.json();
+                  console.log("📦 n8n 回傳資料:", data);
+
+                  // === 1. 解析資料結構，找出陣列 ===
+                  let items = [];
+                  if (Array.isArray(data)) {
+                      items = data;
+                  } else if (typeof data === 'object' && data !== null) {
+                      const possibleKeys = ['items', 'data', 'files', 'results', 'images', 'body'];
+                      for (let key of possibleKeys) {
+                          if (data[key] && Array.isArray(data[key])) {
+                              items = data[key];
+                              break;
+                          }
                       }
-                      
-                      // 只取前兩張
-                      if (extractedUrls.length > 0) {
-                          setPhotos(extractedUrls.slice(0, 2));
-                          console.log("Photos updated:", extractedUrls.slice(0, 2));
+                      if (items.length === 0) {
+                          const values = Object.values(data);
+                          const arrayValue = values.find(v => Array.isArray(v));
+                          if (arrayValue) items = arrayValue;
+                      }
+                      if (items.length === 0 && (data.name || data.webViewLink || data.id)) {
+                          items = [data];
                       }
                   }
+
+                  // === 2. 提取圖片連結 (Thumbnail優先 > ID > WebView) ===
+                  const extractedUrls = items.map(item => {
+                      let url = item.thumbnailLink;
+                      
+                      if (!url) {
+                          // 嘗試從 ID 或 WebViewLink 提取 ID 來建立縮圖連結
+                          const fileId = item.id || extractFileId(item.webViewLink);
+                          if (fileId) {
+                              url = buildThumbnailUrl(fileId);
+                          }
+                      }
+                      return url;
+                  }).filter(Boolean); // 過濾掉 null/undefined
+
+                  console.log("✨ 最終圖片 URL:", extractedUrls);
+
+                  if (extractedUrls.length > 0) {
+                      setPhotos(extractedUrls.slice(0, 2));
+                  } else {
+                      console.warn("❌ 未發現可用圖片連結");
+                  }
+
               } catch (e) {
-                  console.error("Failed to fetch photos even with proxy", e);
+                  console.error("❌ 抓取流程錯誤:", e);
               }
           }, []);
 
