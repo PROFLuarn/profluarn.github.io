@@ -53,7 +53,7 @@
             margin-bottom: 15px;
         }
 
-        /* ----- iOS 水滴感相框 ----- */
+        /* iOS 水滴感相框 */
         .art-frame {
             position: relative;
             border-radius: 16px; 
@@ -98,7 +98,7 @@
             line-height: 1.4;
         }
 
-        /* ----- Lightbox (全螢幕大圖) ----- */
+        /* Lightbox */
         #lightbox {
             position: fixed;
             top: 0;
@@ -110,7 +110,7 @@
             -webkit-backdrop-filter: blur(8px);
             z-index: 9999;
             display: flex;
-            flex-direction: column; /* 改為垂直排列 */
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             opacity: 0;
@@ -125,7 +125,7 @@
 
         #lightbox-img {
             max-width: 95%;
-            max-height: 75%; /* 留空間給下方的按鈕 */
+            max-height: 75%;
             border-radius: 8px;
             box-shadow: 0 0 40px rgba(0,0,0,0.5);
             transform: scale(0.95);
@@ -137,7 +137,6 @@
             transform: scale(1);
         }
 
-        /* 下載按鈕樣式 */
         .lightbox-actions {
             display: flex;
             flex-direction: column;
@@ -148,10 +147,10 @@
             bottom: 40px;
         }
 
-        #download-btn {
-            background: #007aff; /* iOS Blue */
+        #save-btn {
+            background: #007aff; 
             color: white;
-            text-decoration: none;
+            border: none;
             padding: 12px 30px;
             border-radius: 30px;
             font-weight: 600;
@@ -159,16 +158,22 @@
             box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
             border: 1px solid rgba(255,255,255,0.2);
             transition: transform 0.2s, background 0.2s;
-            /* 讓按鈕可以點擊，不會被 lightbox 的關閉事件蓋過 */
             pointer-events: auto; 
             display: flex;
             align-items: center;
             gap: 8px;
+            cursor: pointer;
         }
 
-        #download-btn:active {
+        #save-btn:active {
             transform: scale(0.95);
             background: #0063ce;
+        }
+
+        /* 讀取狀態 */
+        #save-btn.loading {
+            background: #888;
+            pointer-events: none;
         }
 
         #close-hint {
@@ -203,14 +208,14 @@
         <img id="lightbox-img" src="" alt="Full size">
         
         <div class="lightbox-actions">
-            <a id="download-btn" href="#" target="_blank" onclick="event.stopPropagation()">
+            <button id="save-btn" onclick="handleSave(event)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                下載原圖
-            </a>
+                <span id="save-text">儲存到相簿</span>
+            </button>
             <div id="close-hint">再次點擊背景關閉</div>
         </div>
     </div>
@@ -219,12 +224,12 @@
     <script src="https://apis.google.com/js/api.js"></script>
 
     <script>
-        // --------------- 設定區 ---------------
-        const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI';
+        const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
         const FOLDER_ID = '1FU3pgdTyQe7XQC-RfX8h5vZBOzgtDLnr';
-        // -------------------------------------
-
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+        
+        // 用來記錄目前正在檢視的檔案物件
+        let currentFile = null;
 
         window.onload = async function() {
             try {
@@ -255,7 +260,7 @@
                 const response = await gapi.client.drive.files.list({
                     'pageSize': 100,
                     'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
-                    'fields': 'files(id, name, thumbnailLink, webContentLink)',
+                    'fields': 'files(id, name, thumbnailLink, webContentLink, mimeType)',
                     'orderBy': 'createdTime desc'
                 });
 
@@ -277,8 +282,6 @@
 
                     const frame = document.createElement('div');
                     frame.className = 'art-frame';
-                    
-                    // 點擊直接開啟 Lightbox
                     frame.onclick = () => openLightbox(file);
 
                     const img = document.createElement('img');
@@ -297,7 +300,6 @@
                     col.appendChild(frame);
                     captionArea.appendChild(captionText);
                     col.appendChild(captionArea);
-                    
                     gallery.appendChild(col);
                 });
 
@@ -309,20 +311,20 @@
 
         // --- Lightbox 邏輯 ---
         function openLightbox(file) {
+            currentFile = file;
             const lightbox = document.getElementById('lightbox');
             const img = document.getElementById('lightbox-img');
-            const downloadBtn = document.getElementById('download-btn');
             
-            // 1. 設定大圖圖片
-            // 嘗試取得最高解析度 (=s0)
+            // 取得高解析度 (=s0)
             const highResUrl = file.thumbnailLink.replace('=s220', '=s0');
             img.src = highResUrl;
+            
+            // 重置按鈕狀態
+            const btn = document.getElementById('save-btn');
+            const btnText = document.getElementById('save-text');
+            btn.classList.remove('loading');
+            btnText.innerText = '儲存到相簿';
 
-            // 2. 設定下載按鈕連結
-            // webContentLink 是 Google Drive 的強制下載連結，點擊後瀏覽器會自動處理
-            downloadBtn.href = file.webContentLink;
-
-            // 3. 顯示介面
             lightbox.classList.add('active');
         }
 
@@ -331,7 +333,75 @@
             lightbox.classList.remove('active');
             setTimeout(() => {
                 document.getElementById('lightbox-img').src = '';
+                currentFile = null;
             }, 300);
+        }
+
+        // --- ★★★ 核心：呼叫系統分享/儲存選單 ★★★ ---
+        async function handleSave(event) {
+            event.stopPropagation(); // 阻止背景點擊關閉
+            
+            if (!currentFile) return;
+
+            const btn = document.getElementById('save-btn');
+            const btnText = document.getElementById('save-text');
+            
+            // 避免重複點擊
+            if (btn.classList.contains('loading')) return;
+
+            // UI 轉圈圈
+            btn.classList.add('loading');
+            btnText.innerText = '下載中...';
+
+            try {
+                // 1. 準備下載網址 (使用 s0 取得原圖)
+                // 這裡必須用 fetch 抓取 Blob，才能傳給手機的分享選單
+                const imageUrl = currentFile.thumbnailLink.replace('=s220', '=s0');
+                
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                
+                // 2. 建立檔案物件
+                // 注意：iOS Safari 需要正確的 mimetype (如 image/jpeg)
+                const fileObj = new File([blob], currentFile.name, { type: blob.type });
+
+                // 3. 檢查是否支援 Web Share API (手機原生分享)
+                if (navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+                    // --- 手機模式：呼叫原生選單 ---
+                    await navigator.share({
+                        files: [fileObj],
+                        title: '儲存相片',
+                        text: '來自台科大相簿'
+                    });
+                    // 如果使用者成功呼叫了選單 (或取消)，恢復按鈕
+                    btnText.innerText = '已呼叫儲存';
+                } else {
+                    // --- 電腦/不支援模式：傳統下載 ---
+                    // 建立臨時連結下載
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = currentFile.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(downloadUrl);
+                    btnText.innerText = '下載完成';
+                }
+
+            } catch (err) {
+                console.error("下載失敗", err);
+                // 如果 Share API 失敗，嘗試回退到開新視窗
+                window.open(currentFile.webContentLink, '_blank');
+                btnText.innerText = '已開啟原圖';
+                alert('自動儲存失敗，請長按圖片手動儲存。');
+            } finally {
+                // 2秒後恢復按鈕原始狀態
+                setTimeout(() => {
+                    btn.classList.remove('loading');
+                    btnText.innerText = '儲存到相簿';
+                }, 2000);
+            }
         }
     </script>
 </body>
