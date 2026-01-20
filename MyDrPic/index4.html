@@ -3,193 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artist Gallery - mypic</title>
+    <title>欒老師分享相簿</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-color: #f9f9f9; /* 柔和的米灰色背景 */
-            --card-bg: #ffffff;
-            --text-main: #2c2c2c;
-            --text-sub: #888888;
+            /* 金色漸層定義 */
+            --gold-gradient: linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C);
+            --bg-color: #ffffff;
+            --text-color: #333333;
         }
 
-        body { 
-            font-family: 'Lato', sans-serif; 
-            padding: 20px 10px; /* 手機版左右留白減少 */
-            background-color: var(--bg-color); 
-            margin: 0;
-        }
-
-        /* 藝術風格標題 */
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-            padding-top: 20px;
-        }
-
-        h1 { 
-            font-family: 'Playfair Display', serif; 
-            font-weight: 600;
-            font-size: 2.5rem;
-            color: var(--text-main); 
-            margin: 0;
-            letter-spacing: 1px;
-        }
-
-        h1::after {
-            content: "";
-            display: block;
-            width: 60px;
-            height: 3px;
-            background-color: #333;
-            margin: 15px auto 0;
-        }
-
-        .subtitle {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            color: var(--text-sub);
-            margin-top: 10px;
-        }
-        
-        #loading { 
-            text-align: center; 
-            font-family: 'Playfair Display', serif; 
-            font-size: 1.2rem; 
-            color: var(--text-sub); 
-            margin-top: 100px; 
-            letter-spacing: 2px;
-            animation: fadeIn 1s infinite alternate;
-        }
-
-        /* 畫廊佈局設定 */
-        #gallery { 
-            display: grid; 
-            /* 電腦版預設：最小寬度 280px，自動填滿 */
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            gap: 40px; /* 增加間距，更有呼吸感 */
-            max-width: 1400px;
-            margin: 0 auto;
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Noto Sans TC', sans-serif; /* 改用中文字體 */
+            color: var(--text-color);
             padding-bottom: 50px;
         }
 
-        /* 卡片設計：類似畫廊裱框 */
-        .photo-card {
-            background: var(--card-bg);
-            padding: 15px; /* 白邊效果 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); /* 非常柔和的陰影 */
-            transition: all 0.4s ease;
+        /* 標題區設計 */
+        header {
+            text-align: center;
+            padding: 40px 0 30px;
+            background: #ffffff;
+            border-bottom: 1px solid #f0f0f0; /* 淡淡的分隔線 */
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            /* 文字金色漸層 */
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; 
+            /* 在白底上增加文字陰影，確保金色清晰可見 */
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-family: 'Cinzel', serif; /* 副標題保留英文字體風格 */
+            font-size: 0.9rem;
+            color: #888;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        /* 載入動畫 */
+        #loading {
+            text-align: center;
+            color: #B38728;
+            margin-top: 50px;
+        }
+
+        /* ----- 金色玻璃相框 (白底優化版) ----- */
+        .art-frame {
             position: relative;
+            border-radius: 4px;
+            padding: 4px; /* 稍微加粗金邊 */
+            background: var(--gold-gradient); 
+            /* 在白底上，陰影要更柔和但範圍要夠大 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             cursor: pointer;
+            height: 100%;
         }
 
-        /* 滑鼠懸停效果 */
-        .photo-card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+        /* 玻璃質感層 */
+        .glass-overlay {
+            background: rgba(255, 255, 255, 0.3); /* 提高透明度 */
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            height: 100%;
+            position: relative;
+            overflow: hidden;
         }
 
-        .photo-card img {
+        .art-frame:hover {
+            transform: translateY(-5px) scale(1.02);
+            /* 懸停時加深陰影，營造浮起感 */
+            box-shadow: 0 15px 30px rgba(179, 135, 40, 0.4); 
+            z-index: 10;
+        }
+
+        .gallery-img {
             width: 100%;
-            height: 280px; /* 電腦版高度 */
+            aspect-ratio: 1 / 1; 
             object-fit: cover;
             display: block;
-            filter: grayscale(10%); /* 預設帶一點點低飽和，更有質感 */
-            transition: filter 0.4s;
+            transition: filter 0.3s ease, transform 0.5s ease;
         }
 
-        .photo-card:hover img {
-            filter: grayscale(0%); /* 懸停時恢復全彩 */
+        .art-frame:hover .gallery-img {
+            transform: scale(1.05); /* 圖片微微放大 */
         }
 
-        .photo-card .info {
-            padding-top: 15px;
+        /* 標題條 */
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.9); /* 改為淺色底 */
+            color: #333; /* 深色字 */
+            font-size: 11px;
+            font-weight: bold;
             text-align: center;
-        }
-
-        .photo-card p {
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            margin: 0;
+            padding: 6px 2px;
+            opacity: 0; 
+            transition: opacity 0.3s;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            text-transform: uppercase; /* 大寫字母，看起來較高級 */
-            letter-spacing: 1px;
         }
 
-        /* --------------- 手機版響應式設定 (小於 768px) --------------- */
-        @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            
-            #gallery {
-                /* 強制改為兩欄，模仿 Instagram/Pinterest */
-                grid-template-columns: 1fr 1fr; 
-                gap: 10px; /* 手機版間距縮小 */
-                padding: 0 5px;
-            }
-
-            .photo-card {
-                padding: 8px; /* 手機版白邊縮小 */
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            }
-
-            .photo-card:hover {
-                transform: none; /* 手機版取消浮動特效，避免誤觸 */
-            }
-
-            .photo-card img {
-                height: 150px; /* 手機版圖片高度縮小 */
-            }
-
-            .photo-card p {
-                font-size: 0.7rem; /* 文字縮小 */
-                letter-spacing: 0.5px;
-            }
+        .art-frame:hover .caption {
+            opacity: 1;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0.3; }
-            to { opacity: 1; }
+        /* Grid 修正 */
+        .col-4, .col-md-3, .col-lg-2 {
+            padding: 8px; /* 增加一點間距讓畫面更清爽 */
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>MY GALLERY</h1>
+        <h1>欒老師分享相簿</h1>
         <div class="subtitle">Photography Collection</div>
     </header>
-    
-    <div id="loading">Loading Collection...</div>
-    <div id="gallery"></div>
 
+    <div class="container-fluid">
+        <div id="loading">
+            <div class="spinner-border text-warning" role="status"></div>
+            <div class="mt-2">正在讀取相片...</div>
+        </div>
+        
+        <div id="gallery" class="row justify-content-center px-2">
+            </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
 
     <script>
         // --------------- 設定區 ---------------
+        // 請填入您的 API Key (如果 key.txt 讀取失敗會用這個)
         const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
-        const FOLDER_ID = '15Z16NjHpXXrBNpTjFL61r0fpL85AiA0S';
+        const FOLDER_ID = '1FU3pgdTyQe7XQC-RfX8h5vZBOzgtDLnr';
         // -------------------------------------
 
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 
-        window.onload = function() {
+        window.onload = async function() {
+            try {
+                // 嘗試讀取 key.txt
+                const response = await fetch('./key.txt');
+                if (response.ok) {
+                    const text = await response.text();
+                    const fileKey = text.split('\n')[0].trim();
+                    if(fileKey) window.apiKeyToUse = fileKey;
+                }
+            } catch (e) {
+                console.log("Fallback to hardcoded key");
+            }
+            
             gapi.load('client', initClient);
         };
 
         function initClient() {
+            const key = window.apiKeyToUse || API_KEY;
+            
+            if (key === 'YOUR_API_KEY_HERE') {
+                 // 如果真的沒有 key，顯示提示
+                 // document.getElementById('loading').innerHTML = '<span style="color:red">請設定 API Key</span>';
+            }
+
             gapi.client.init({
-                apiKey: API_KEY,
+                apiKey: key,
                 discoveryDocs: DISCOVERY_DOCS,
             }).then(() => {
                 listFiles();
             }).catch(error => {
-                console.error("GAPI 初始化失敗", error);
                 document.getElementById('loading').innerHTML = 
-                    `<span style="color:red">Loading Failed.</span><br><small>${JSON.stringify(error)}</small>`;
+                    `<span style="color:red">初始化失敗</span><br><small>${JSON.stringify(error)}</small>`;
             });
         }
 
@@ -210,39 +213,42 @@
                 loading.style.display = 'none';
 
                 if (!files || files.length === 0) {
-                    gallery.innerHTML = '<p style="text-align:center; width:100%;">No photos found.</p>';
+                    gallery.innerHTML = '<p class="text-center w-100">相簿是空的。</p>';
                     return;
                 }
 
                 files.forEach(file => {
-                    const card = document.createElement('div');
-                    card.className = 'photo-card';
-                    card.onclick = () => window.open(file.webContentLink, '_blank'); // 點擊卡片任何位置都開啟
+                    // 響應式設定：手機 col-4 (一行3張), 平板 col-md-3, 電腦 col-lg-2
+                    const col = document.createElement('div');
+                    col.className = 'col-4 col-md-3 col-lg-2 mb-3'; 
+
+                    const frame = document.createElement('div');
+                    frame.className = 'art-frame';
+                    frame.onclick = () => window.open(file.webContentLink, '_blank');
+
+                    const glass = document.createElement('div');
+                    glass.className = 'glass-overlay';
 
                     const img = document.createElement('img');
-                    // 取得較大縮圖 (s800)
+                    img.className = 'gallery-img';
                     img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''; 
                     img.alt = file.name;
-                    img.loading = "lazy"; // 圖片懶加載，提升手機效能
+                    img.loading = "lazy";
 
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'info';
-                    const title = document.createElement('p');
-                    
-                    // 去掉副檔名，讓標題更乾淨
-                    const cleanName = file.name.replace(/\.[^/.]+$/, "");
-                    title.textContent = cleanName;
+                    const caption = document.createElement('div');
+                    caption.className = 'caption';
+                    caption.textContent = file.name.replace(/\.[^/.]+$/, "");
 
-                    infoDiv.appendChild(title);
-                    card.appendChild(img);
-                    card.appendChild(infoDiv);
-                    gallery.appendChild(card);
+                    glass.appendChild(img);
+                    glass.appendChild(caption);
+                    frame.appendChild(glass);
+                    col.appendChild(frame);
+                    gallery.appendChild(col);
                 });
 
             } catch (err) {
-                console.error("讀取錯誤", err);
-                document.getElementById('loading').innerHTML = 
-                    `<span style="color:red">Error loading photos.</span>`;
+                console.error("Error", err);
+                document.getElementById('loading').innerHTML = `<span style="color:red">相片讀取失敗。</span>`;
             }
         }
     </script>
