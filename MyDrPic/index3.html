@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Drive 相簿 (自動載入)</title>
+    <title>Google Drive 相簿 (讀取外部Key)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         
-        /* 載入中的動畫 */
         #loading { text-align: center; font-size: 18px; color: #666; margin-top: 50px; }
         
         #gallery { 
@@ -51,49 +50,70 @@
 
     <h1>我的相簿 (mypic)</h1>
     
-    <div id="loading">正在讀取相片中...</div>
+    <div id="loading">正在讀取設定檔 (.opal)...</div>
     <div id="gallery"></div>
 
     <script src="https://apis.google.com/js/api.js"></script>
 
     <script>
-        // --------------- 設定區 ---------------
-        // 填入您的 API Key (注意：這必須是在 Google Cloud Console 啟用過 Drive API 的 Key)
-        API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
+        // 全域變數，用來存儲從檔案讀來的 Key
+        let API_KEY = '';
         
-        // 您的資料夾 ID
+        // 您的資料夾 ID (這通常不敏感，可以直接放這裡)
         const FOLDER_ID = '15Z16NjHpXXrBNpTjFL61r0fpL85AiA0S';
-        // -------------------------------------
-
+        
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 
-        // 網頁載入後立即執行
-        window.onload = function() {
-            gapi.load('client', initClient);
+        // 步驟 1: 網頁載入後，先去讀取 .opal 檔案
+        window.onload = async function() {
+            try {
+                // 嘗試讀取同目錄下的 .opal 檔案
+                const response = await fetch('./.opal');
+                
+                if (!response.ok) {
+                    throw new Error(`找不到 .opal 檔案 (Status: ${response.status})`);
+                }
+
+                const text = await response.text();
+                
+                // 讀取第一行，並去除前後空白或換行符號
+                API_KEY = text.split('\n')[0].trim();
+
+                if (!API_KEY) {
+                    throw new Error(".opal 檔案內容是空的");
+                }
+
+                // 步驟 2: 拿到 Key 之後，才載入 Google API
+                document.getElementById('loading').innerText = "設定讀取成功，正在連線 Google Drive...";
+                gapi.load('client', initClient);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loading').innerHTML = 
+                    `<span style="color:red">設定檔讀取錯誤：${err.message}</span><br>請確認 .opal 檔案是否存在於同一目錄。`;
+            }
         };
 
         function initClient() {
             gapi.client.init({
-                apiKey: API_KEY,
+                apiKey: API_KEY, // 這裡使用的是從檔案讀來的變數
                 discoveryDocs: DISCOVERY_DOCS,
             }).then(() => {
-                // 初始化成功後，直接讀取檔案
                 listFiles();
             }).catch(error => {
                 console.error("GAPI 初始化失敗", error);
                 document.getElementById('loading').innerHTML = 
-                    `<span style="color:red">初始化失敗。請檢查 API Key 是否正確，以及 Google Cloud Console 是否已啟用 Drive API。</span><br>錯誤訊息: ${JSON.stringify(error)}`;
+                    `<span style="color:red">GAPI 初始化失敗。</span><br>錯誤訊息: ${JSON.stringify(error)}`;
             });
         }
 
         async function listFiles() {
             try {
-                // 讀取檔案列表
                 const response = await gapi.client.drive.files.list({
                     'pageSize': 100,
                     'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
                     'fields': 'files(id, name, thumbnailLink, webContentLink)',
-                    'orderBy': 'createdTime desc' // 依照建立時間排序(新到舊)
+                    'orderBy': 'createdTime desc'
                 });
 
                 const files = response.result.files;
@@ -101,10 +121,10 @@
                 const loading = document.getElementById('loading');
                 
                 gallery.innerHTML = '';
-                loading.style.display = 'none'; // 隱藏載入文字
+                loading.style.display = 'none';
 
                 if (!files || files.length === 0) {
-                    gallery.innerHTML = '<p style="text-align:center; width:100%;">資料夾是空的，或是權限不足（請確認資料夾已設為「知道連結的任何人皆可檢視」）。</p>';
+                    gallery.innerHTML = '<p style="text-align:center; width:100%;">資料夾是空的，或是權限不足。</p>';
                     return;
                 }
 
@@ -113,10 +133,8 @@
                     card.className = 'photo-card';
 
                     const img = document.createElement('img');
-                    // 嘗試取得高解析度縮圖 (將 s220 改為 s800)
                     img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''; 
                     img.alt = file.name;
-                    // 點擊開啟原圖
                     img.onclick = () => window.open(file.webContentLink, '_blank'); 
 
                     const infoDiv = document.createElement('div');
@@ -133,7 +151,7 @@
             } catch (err) {
                 console.error("讀取錯誤", err);
                 document.getElementById('loading').innerHTML = 
-                    `<span style="color:red">讀取失敗。</span><br>請確認：<br>1. API Key 正確<br>2. 資料夾權限已設為「知道連結的任何人」<br>3. 錯誤訊息: ${err.message || JSON.stringify(err)}`;
+                    `<span style="color:red">相片讀取失敗。</span><br>請確認 API Key 是否正確。<br>錯誤訊息: ${err.message || JSON.stringify(err)}`;
             }
         }
     </script>
