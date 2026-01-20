@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Gallery - mypic</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f9f9f9; /* 柔和的米灰色背景 */
+            --card-bg: #ffffff;
+            --text-main: #2c2c2c;
+            --text-sub: #888888;
+        }
+
+        body { 
+            font-family: 'Lato', sans-serif; 
+            padding: 20px 10px; /* 手機版左右留白減少 */
+            background-color: var(--bg-color); 
+            margin: 0;
+        }
+
+        /* 藝術風格標題 */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-top: 20px;
+        }
+
+        h1 { 
+            font-family: 'Playfair Display', serif; 
+            font-weight: 600;
+            font-size: 2.5rem;
+            color: var(--text-main); 
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        h1::after {
+            content: "";
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: #333;
+            margin: 15px auto 0;
+        }
+
+        .subtitle {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: var(--text-sub);
+            margin-top: 10px;
+        }
+        
+        #loading { 
+            text-align: center; 
+            font-family: 'Playfair Display', serif; 
+            font-size: 1.2rem; 
+            color: var(--text-sub); 
+            margin-top: 100px; 
+            letter-spacing: 2px;
+            animation: fadeIn 1s infinite alternate;
+        }
+
+        /* 畫廊佈局設定 */
+        #gallery { 
+            display: grid; 
+            /* 電腦版預設：最小寬度 280px，自動填滿 */
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 40px; /* 增加間距，更有呼吸感 */
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 50px;
+        }
+
+        /* 卡片設計：類似畫廊裱框 */
+        .photo-card {
+            background: var(--card-bg);
+            padding: 15px; /* 白邊效果 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); /* 非常柔和的陰影 */
+            transition: all 0.4s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* 滑鼠懸停效果 */
+        .photo-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1); 
+        }
+
+        .photo-card img {
+            width: 100%;
+            height: 280px; /* 電腦版高度 */
+            object-fit: cover;
+            display: block;
+            filter: grayscale(10%); /* 預設帶一點點低飽和，更有質感 */
+            transition: filter 0.4s;
+        }
+
+        .photo-card:hover img {
+            filter: grayscale(0%); /* 懸停時恢復全彩 */
+        }
+
+        .photo-card .info {
+            padding-top: 15px;
+            text-align: center;
+        }
+
+        .photo-card p {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-transform: uppercase; /* 大寫字母，看起來較高級 */
+            letter-spacing: 1px;
+        }
+
+        /* --------------- 手機版響應式設定 (小於 768px) --------------- */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            
+            #gallery {
+                /* 強制改為兩欄，模仿 Instagram/Pinterest */
+                grid-template-columns: 1fr 1fr; 
+                gap: 10px; /* 手機版間距縮小 */
+                padding: 0 5px;
+            }
+
+            .photo-card {
+                padding: 8px; /* 手機版白邊縮小 */
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+
+            .photo-card:hover {
+                transform: none; /* 手機版取消浮動特效，避免誤觸 */
+            }
+
+            .photo-card img {
+                height: 150px; /* 手機版圖片高度縮小 */
+            }
+
+            .photo-card p {
+                font-size: 0.7rem; /* 文字縮小 */
+                letter-spacing: 0.5px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0.3; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>MY GALLERY</h1>
+        <div class="subtitle">Photography Collection</div>
+    </header>
+    
+    <div id="loading">Loading Collection...</div>
+    <div id="gallery"></div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script>
+        // --------------- 設定區 ---------------
+        const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
+        const FOLDER_ID = '15Z16NjHpXXrBNpTjFL61r0fpL85AiA0S';
+        // -------------------------------------
+
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+
+        window.onload = function() {
+            gapi.load('client', initClient);
+        };
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: DISCOVERY_DOCS,
+            }).then(() => {
+                listFiles();
+            }).catch(error => {
+                console.error("GAPI 初始化失敗", error);
+                document.getElementById('loading').innerHTML = 
+                    `<span style="color:red">Loading Failed.</span><br><small>${JSON.stringify(error)}</small>`;
+            });
+        }
+
+        async function listFiles() {
+            try {
+                const response = await gapi.client.drive.files.list({
+                    'pageSize': 100,
+                    'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
+                    'fields': 'files(id, name, thumbnailLink, webContentLink)',
+                    'orderBy': 'createdTime desc'
+                });
+
+                const files = response.result.files;
+                const gallery = document.getElementById('gallery');
+                const loading = document.getElementById('loading');
+                
+                gallery.innerHTML = '';
+                loading.style.display = 'none';
+
+                if (!files || files.length === 0) {
+                    gallery.innerHTML = '<p style="text-align:center; width:100%;">No photos found.</p>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const card = document.createElement('div');
+                    card.className = 'photo-card';
+                    card.onclick = () => window.open(file.webContentLink, '_blank'); // 點擊卡片任何位置都開啟
+
+                    const img = document.createElement('img');
+                    // 取得較大縮圖 (s800)
+                    img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''; 
+                    img.alt = file.name;
+                    img.loading = "lazy"; // 圖片懶加載，提升手機效能
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'info';
+                    const title = document.createElement('p');
+                    
+                    // 去掉副檔名，讓標題更乾淨
+                    const cleanName = file.name.replace(/\.[^/.]+$/, "");
+                    title.textContent = cleanName;
+
+                    infoDiv.appendChild(title);
+                    card.appendChild(img);
+                    card.appendChild(infoDiv);
+                    gallery.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("讀取錯誤", err);
+                document.getElementById('loading').innerHTML = 
+                    `<span style="color:red">Error loading photos.</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
