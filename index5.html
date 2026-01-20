@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>台科大相簿</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f2f2f7;
+            --text-color: #1d1d1f;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+            color: var(--text-color);
+            padding-bottom: 50px;
+            /* 禁止長按選取文字，讓長按下載體驗更好 */
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none; /* iOS 禁止預設長按選單，改用我們自己的下載邏輯 */
+        }
+
+        header {
+            text-align: center;
+            padding: 50px 0 30px;
+        }
+
+        h1 {
+            font-weight: 700;
+            color: var(--text-color);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #86868b;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #loading {
+            text-align: center;
+            color: #007aff;
+            margin-top: 50px;
+        }
+
+        /* ----- iOS 水滴感相框 (極簡版) ----- */
+        .art-frame {
+            position: relative;
+            border-radius: 18px; 
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: zoom-in; /* 游標提示可以放大 */
+            height: 100%;
+            /* 關鍵：讓所有點擊事件都由 JS 控制 */
+            touch-action: manipulation;
+        }
+
+        /* 按壓時的微縮效果 (回饋感) */
+        .art-frame:active {
+            transform: scale(0.96);
+        }
+
+        .gallery-img {
+            width: 100%;
+            aspect-ratio: 1 / 1; 
+            object-fit: cover;
+            display: block;
+            pointer-events: none; /* 讓事件穿透到父層 art-frame */
+        }
+
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
+            color: #333;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ----- Lightbox (全螢幕大圖模式) ----- */
+        #lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9); /* 深色背景 */
+            backdrop-filter: blur(10px); /* 背景模糊 */
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none; /* 隱藏時不擋點擊 */
+            transition: opacity 0.3s ease;
+            cursor: zoom-out;
+        }
+
+        #lightbox.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #lightbox-img {
+            max-width: 95%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #lightbox.active #lightbox-img {
+            transform: scale(1);
+        }
+
+        #lightbox-hint {
+            position: absolute;
+            bottom: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+        }
+
+        /* Grid */
+        .col-4, .col-md-3, .col-lg-2 {
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>台科大相簿</h1>
+        <div class="subtitle">NTUST Album Collection</div>
+    </header>
+
+    <div class="container-fluid">
+        <div id="loading">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2">正在讀取相片...</div>
+        </div>
+        
+        <div id="gallery" class="row justify-content-center px-3">
+            </div>
+    </div>
+
+    <div id="lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="Full size">
+        <div id="lightbox-hint">再次點擊關閉 / 長按下載原圖</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script>
+        // --------------- 設定區 ---------------
+        const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
+        const FOLDER_ID = '1FU3pgdTyQe7XQC-RfX8h5vZBOzgtDLnr';
+        // -------------------------------------
+
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+
+        window.onload = async function() {
+            try {
+                const response = await fetch('./key.txt');
+                if (response.ok) {
+                    const text = await response.text();
+                    const fileKey = text.split('\n')[0].trim();
+                    if(fileKey) window.apiKeyToUse = fileKey;
+                }
+            } catch (e) { console.log("Fallback key"); }
+            gapi.load('client', initClient);
+        };
+
+        function initClient() {
+            const key = window.apiKeyToUse || API_KEY;
+            gapi.client.init({
+                apiKey: key,
+                discoveryDocs: DISCOVERY_DOCS,
+            }).then(() => {
+                listFiles();
+            }).catch(error => {
+                document.getElementById('loading').innerHTML = `<span style="color:red">初始化失敗</span>`;
+            });
+        }
+
+        async function listFiles() {
+            try {
+                const response = await gapi.client.drive.files.list({
+                    'pageSize': 100,
+                    'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
+                    'fields': 'files(id, name, thumbnailLink, webContentLink)',
+                    'orderBy': 'createdTime desc'
+                });
+
+                const files = response.result.files;
+                const gallery = document.getElementById('gallery');
+                const loading = document.getElementById('loading');
+                
+                gallery.innerHTML = '';
+                loading.style.display = 'none';
+
+                if (!files || files.length === 0) {
+                    gallery.innerHTML = '<p class="text-center w-100">相簿是空的。</p>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const col = document.createElement('div');
+                    col.className = 'col-4 col-md-4 col-lg-2 mb-3'; 
+
+                    const frame = document.createElement('div');
+                    frame.className = 'art-frame';
+                    
+                    // 綁定自定義的「長按」與「點擊」偵測
+                    bindPressEvents(frame, file);
+
+                    const img = document.createElement('img');
+                    img.className = 'gallery-img';
+                    img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''; 
+                    img.alt = file.name;
+                    img.loading = "lazy";
+
+                    const caption = document.createElement('div');
+                    caption.className = 'caption';
+                    caption.textContent = file.name.replace(/\.[^/.]+$/, "");
+
+                    frame.appendChild(img);
+                    frame.appendChild(caption);
+                    col.appendChild(frame);
+                    gallery.appendChild(col);
+                });
+
+            } catch (err) {
+                console.error("Error", err);
+                document.getElementById('loading').innerHTML = `<span style="color:red">相片讀取失敗</span>`;
+            }
+        }
+
+        // --- 核心邏輯：區分「點擊」與「長按」 ---
+        function bindPressEvents(element, file) {
+            let timer;
+            let isLongPress = false;
+            const LONG_PRESS_DURATION = 600; // 0.6秒視為長按
+
+            // 觸控開始
+            const startHandler = (e) => {
+                isLongPress = false;
+                // 設定計時器，時間到就執行下載
+                timer = setTimeout(() => {
+                    isLongPress = true;
+                    triggerDownload(file);
+                    // 在手機上震動一下作為回饋 (如果有支援)
+                    if (navigator.vibrate) navigator.vibrate(50);
+                }, LONG_PRESS_DURATION);
+            };
+
+            // 觸控結束
+            const endHandler = (e) => {
+                // 如果還沒到長按時間就放開，代表是「點擊」
+                if (timer) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
+                
+                if (!isLongPress) {
+                    // 執行點擊動作：打開大圖
+                    openLightbox(file);
+                } else {
+                    // 如果是長按，阻止預設的點擊事件傳遞
+                    e.preventDefault(); 
+                }
+            };
+            
+            // 觸控取消 (例如手指滑出範圍)
+            const cancelHandler = () => {
+                if (timer) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
+            };
+
+            // 支援滑鼠與觸控
+            element.addEventListener('touchstart', startHandler, {passive: false});
+            element.addEventListener('touchend', endHandler, {passive: false});
+            element.addEventListener('touchcancel', cancelHandler);
+            
+            // 避免滑鼠右鍵選單干擾
+            element.oncontextmenu = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            };
+
+            // 電腦版滑鼠事件
+            element.addEventListener('mousedown', (e) => {
+                if(e.button === 0) startHandler(e); // 左鍵
+            });
+            element.addEventListener('mouseup', endHandler);
+            element.addEventListener('mouseleave', cancelHandler);
+        }
+
+        // --- 功能 1：打開大圖 (Lightbox) ---
+        function openLightbox(file) {
+            const lightbox = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            
+            // 嘗試取得最高解析度 (=s0)
+            const highResUrl = file.thumbnailLink.replace('=s220', '=s0');
+            
+            img.src = highResUrl;
+            lightbox.classList.add('active');
+        }
+
+        // --- 功能 2：關閉大圖 ---
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+            // 稍微延遲清空 src，避免閃爍
+            setTimeout(() => {
+                document.getElementById('lightbox-img').src = '';
+            }, 300);
+        }
+
+        // --- 功能 3：觸發下載 ---
+        function triggerDownload(file) {
+            // 建立一個臨時連結來觸發下載
+            const link = document.createElement('a');
+            link.href = file.webContentLink; // 這是 Google 強制下載連結
+            link.target = '_blank'; // 新分頁開啟較穩
+            link.download = file.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // 提示使用者
+            // 可選：做一個簡單的 toast 提示
+            showToast("正在下載原圖...");
+        }
+
+        // 簡單的提示框
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '50%';
+            toast.style.left = '50%';
+            toast.style.transform = 'translate(-50%, 50%)';
+            toast.style.background = 'rgba(0,0,0,0.8)';
+            toast.style.color = 'white';
+            toast.style.padding = '15px 30px';
+            toast.style.borderRadius = '30px';
+            toast.style.zIndex = '10000';
+            toast.style.fontSize = '16px';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(toast), 500);
+            }, 1500);
+        }
+
+    </script>
+</body>
+</html>
