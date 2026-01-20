@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive 相簿 (自動載入)</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        
+        /* 載入中的動畫 */
+        #loading { text-align: center; font-size: 18px; color: #666; margin-top: 50px; }
+        
+        #gallery { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 20px; 
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .photo-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .photo-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .photo-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            cursor: pointer;
+            display: block;
+        }
+        .photo-card .info {
+            padding: 10px;
+            text-align: center;
+        }
+        .photo-card p {
+            font-size: 13px;
+            color: #555;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>我的相簿 (mypic)</h1>
+    
+    <div id="loading">正在讀取相片中...</div>
+    <div id="gallery"></div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script>
+        // --------------- 設定區 ---------------
+        // 填入您的 API Key (注意：這必須是在 Google Cloud Console 啟用過 Drive API 的 Key)
+        API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
+        
+        // 您的資料夾 ID
+        const FOLDER_ID = '15Z16NjHpXXrBNpTjFL61r0fpL85AiA0S';
+        // -------------------------------------
+
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+
+        // 網頁載入後立即執行
+        window.onload = function() {
+            gapi.load('client', initClient);
+        };
+
+        function initClient() {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: DISCOVERY_DOCS,
+            }).then(() => {
+                // 初始化成功後，直接讀取檔案
+                listFiles();
+            }).catch(error => {
+                console.error("GAPI 初始化失敗", error);
+                document.getElementById('loading').innerHTML = 
+                    `<span style="color:red">初始化失敗。請檢查 API Key 是否正確，以及 Google Cloud Console 是否已啟用 Drive API。</span><br>錯誤訊息: ${JSON.stringify(error)}`;
+            });
+        }
+
+        async function listFiles() {
+            try {
+                // 讀取檔案列表
+                const response = await gapi.client.drive.files.list({
+                    'pageSize': 100,
+                    'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
+                    'fields': 'files(id, name, thumbnailLink, webContentLink)',
+                    'orderBy': 'createdTime desc' // 依照建立時間排序(新到舊)
+                });
+
+                const files = response.result.files;
+                const gallery = document.getElementById('gallery');
+                const loading = document.getElementById('loading');
+                
+                gallery.innerHTML = '';
+                loading.style.display = 'none'; // 隱藏載入文字
+
+                if (!files || files.length === 0) {
+                    gallery.innerHTML = '<p style="text-align:center; width:100%;">資料夾是空的，或是權限不足（請確認資料夾已設為「知道連結的任何人皆可檢視」）。</p>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const card = document.createElement('div');
+                    card.className = 'photo-card';
+
+                    const img = document.createElement('img');
+                    // 嘗試取得高解析度縮圖 (將 s220 改為 s800)
+                    img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''; 
+                    img.alt = file.name;
+                    // 點擊開啟原圖
+                    img.onclick = () => window.open(file.webContentLink, '_blank'); 
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'info';
+                    const title = document.createElement('p');
+                    title.textContent = file.name;
+
+                    infoDiv.appendChild(title);
+                    card.appendChild(img);
+                    card.appendChild(infoDiv);
+                    gallery.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("讀取錯誤", err);
+                document.getElementById('loading').innerHTML = 
+                    `<span style="color:red">讀取失敗。</span><br>請確認：<br>1. API Key 正確<br>2. 資料夾權限已設為「知道連結的任何人」<br>3. 錯誤訊息: ${err.message || JSON.stringify(err)}`;
+            }
+        }
+    </script>
+</body>
+</html>
