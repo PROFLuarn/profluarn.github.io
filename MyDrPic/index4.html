@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欒老師分享相簿</title>
+    <title>台科大相簿</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-color: #f2f2f7; /* iOS 風格的淺灰背景，比純白更有層次感 */
-            --text-color: #1d1d1f; /* iOS 深色文字 */
+            --bg-color: #f2f2f7;
+            --text-color: #1d1d1f;
+            --ios-blue: #007aff; /* iOS 系統藍 */
         }
 
         body {
             background-color: var(--bg-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Noto Sans TC"; /* 優先使用系統字體，更像原生 App */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
             color: var(--text-color);
-            padding-bottom: 50px;
+            padding-bottom: 100px; /* 留空間給下載按鈕 */
+            user-select: none; /* 防止連點時選取到文字 */
         }
 
-        /* 標題區設計 - 簡約乾淨 */
         header {
             text-align: center;
             padding: 50px 0 30px;
-            margin-bottom: 20px;
         }
 
         h1 {
@@ -33,66 +33,91 @@
             color: var(--text-color);
             font-size: 2rem;
             margin-bottom: 5px;
-            letter-spacing: 0.5px;
         }
 
         .subtitle {
             font-size: 0.9rem;
-            color: #86868b; /* iOS 次要文字顏色 */
+            color: #86868b;
             letter-spacing: 1px;
             text-transform: uppercase;
-            font-weight: 500;
         }
 
-        /* 載入動畫 */
         #loading {
             text-align: center;
-            color: #007aff; /* iOS 藍色 */
+            color: var(--ios-blue);
             margin-top: 50px;
         }
 
-        /* ----- 核心樣式：iPhone 水滴/毛玻璃質感 ----- */
+        /* ----- 卡片樣式 (iOS 水滴感) ----- */
         .art-frame {
             position: relative;
-            /* 1. 大圓角 */
             border-radius: 18px; 
-            overflow: hidden; /* 讓內部圖片跟著圓角裁切 */
-            
-            /* 2. 玻璃本體背景：極淡的半透明漸層 */
+            overflow: hidden;
             background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%);
-            
-            /* 3. 核心技術：背景模糊 (毛玻璃效果) */
             backdrop-filter: blur(12px) saturate(180%);
-            -webkit-backdrop-filter: blur(12px) saturate(180%); /* Safari 支援 */
-            
-            /* 4. 精緻的光影邊框：模擬光線照射在玻璃邊緣 */
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 
-                inset 0 1px 1px rgba(255, 255, 255, 0.4), /* 內部頂部高光 */
-                0 4px 10px rgba(0, 0, 0, 0.05), /* 柔和的淺陰影 */
-                0 10px 25px rgba(0, 0, 0, 0.08); /* 更深層的擴散陰影 */
-                
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* iOS 風格的彈性動畫曲線 */
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 2px solid rgba(255, 255, 255, 0.5); /* 預設邊框 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
             cursor: pointer;
             height: 100%;
-            z-index: 1;
         }
 
-        /* 移除舊的 glass-overlay 樣式，現在它只是個容器 */
-        .glass-overlay {
-            height: 100%;
-            position: relative;
+        /* 選取狀態：藍色邊框 + 稍微縮小 */
+        .art-frame.selected {
+            border-color: var(--ios-blue);
+            transform: scale(0.96);
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
         }
 
-        /* 懸停效果：輕輕浮起，光影增強 */
-        .art-frame:hover {
-            transform: translateY(-6px) scale(1.01);
-            box-shadow: 
-                inset 0 1px 1px rgba(255, 255, 255, 0.6),
-                0 15px 35px rgba(0, 0, 0, 0.12), /* 陰影加深 */
-                0 5px 15px rgba(0, 0, 0, 0.08);
-            border-color: rgba(255, 255, 255, 0.8); /* 邊框變亮 */
-            z-index: 10;
+        /* 選取勾勾圖示 */
+        .check-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: var(--ios-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+            z-index: 20;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .art-frame.selected .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* 預覽按鈕 (小眼睛) */
+        .preview-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 30;
+            opacity: 0.8;
+            transition: transform 0.2s;
+        }
+        .preview-btn:hover {
+            transform: scale(1.1);
+            background: white;
+            opacity: 1;
         }
 
         .gallery-img {
@@ -100,73 +125,87 @@
             aspect-ratio: 1 / 1; 
             object-fit: cover;
             display: block;
-            /* 圖片本身不需要圓角，因為外層 art-frame 已經設定 overflow: hidden */
-            transition: transform 0.5s ease;
-            /* 讓圖片稍微通透一點點，融合感更好 */
-            opacity: 0.95;
+            pointer-events: none; /* 讓點擊圖片直接穿透到 art-frame */
         }
 
-        .art-frame:hover .gallery-img {
-            transform: scale(1.04); /* 懸停時微微放大 */
-            opacity: 1;
-        }
-
-        /* 標題條：也是毛玻璃風格 */
         .caption {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            
-            /* 標題條的毛玻璃背景 */
             background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255, 255, 255, 0.4); /* 頂部細微亮線 */
-            
+            border-top: 1px solid rgba(255, 255, 255, 0.4);
             color: #333;
             font-size: 12px;
             font-weight: 600;
             text-align: center;
             padding: 10px 4px;
-            
-            opacity: 0; 
-            transition: opacity 0.3s ease;
+            padding-right: 40px; /* 避開預覽按鈕 */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        /* 手機版優化：在小螢幕上直接顯示標題，不用懸停 */
-        @media (max-width: 768px) {
-            .caption {
-                opacity: 1;
-                padding: 8px 4px;
-                background: rgba(255, 255, 255, 0.75); /* 手機版稍微不透明一點，增加閱讀性 */
-            }
-            .art-frame {
-                 border-radius: 14px; /* 手機版圓角稍微小一點點 */
-            }
+        /* ----- 懸浮下載按鈕 ----- */
+        #download-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px); /* 預設隱藏在下方 */
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 12px 25px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
         }
 
-        /* 電腦版懸停才顯示 */
-        @media (min-width: 769px) {
-            .art-frame:hover .caption {
-                opacity: 1;
-            }
+        #download-bar.active {
+            transform: translateX(-50%) translateY(0);
         }
 
-        /* Grid 間距微調 */
+        #download-btn {
+            background: var(--ios-blue);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        #download-btn:active {
+            filter: brightness(0.9);
+            transform: scale(0.98);
+        }
+
+        #selected-count {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        /* Grid */
         .col-4, .col-md-3, .col-lg-2 {
-            padding: 10px; /* 增加間距，讓水滴感更突出 */
+            padding: 8px;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>欒老師分享相簿</h1>
-        <div class="subtitle">Photography Collection</div>
+        <h1>台科大相簿</h1>
+        <div class="subtitle">NTUST Album Collection</div>
     </header>
 
     <div class="container-fluid">
@@ -179,17 +218,26 @@
             </div>
     </div>
 
+    <div id="download-bar">
+        <span id="selected-count">已選取 0 張</span>
+        <button id="download-btn" onclick="downloadSelected()">下載相片</button>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
 
     <script>
         // --------------- 設定區 ---------------
-        // 請填入您的 API Key
         const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
         const FOLDER_ID = '1FU3pgdTyQe7XQC-RfX8h5vZBOzgtDLnr';
         // -------------------------------------
 
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+        
+        // 儲存選取的檔案 (使用 Set 避免重複)
+        let selectedFiles = new Set();
+        // 儲存所有檔案資料以供查詢
+        let allFilesData = {};
 
         window.onload = async function() {
             try {
@@ -199,25 +247,19 @@
                     const fileKey = text.split('\n')[0].trim();
                     if(fileKey) window.apiKeyToUse = fileKey;
                 }
-            } catch (e) {
-                console.log("Fallback to hardcoded key");
-            }
+            } catch (e) { console.log("Fallback key"); }
             gapi.load('client', initClient);
         };
 
         function initClient() {
             const key = window.apiKeyToUse || API_KEY;
-            if (key === 'YOUR_API_KEY_HERE') {
-                 // document.getElementById('loading').innerHTML = '<span style="color:red">請設定 API Key</span>';
-            }
             gapi.client.init({
                 apiKey: key,
                 discoveryDocs: DISCOVERY_DOCS,
             }).then(() => {
                 listFiles();
             }).catch(error => {
-                document.getElementById('loading').innerHTML = 
-                    `<span style="color:red">初始化失敗</span><br><small>${JSON.stringify(error)}</small>`;
+                document.getElementById('loading').innerHTML = `<span style="color:red">初始化失敗</span>`;
             });
         }
 
@@ -243,16 +285,33 @@
                 }
 
                 files.forEach(file => {
+                    // 存入全域變數方便後續取用
+                    allFilesData[file.id] = file;
+
                     const col = document.createElement('div');
-                    // 調整 RWD：平板 (md) 改為一列 3 張，視野更好
                     col.className = 'col-4 col-md-4 col-lg-2 mb-3'; 
 
+                    // 建立卡片
                     const frame = document.createElement('div');
                     frame.className = 'art-frame';
-                    frame.onclick = () => window.open(file.webContentLink, '_blank');
+                    frame.id = `card-${file.id}`;
+                    // 綁定點擊事件 -> 切換選取
+                    frame.onclick = (e) => toggleSelection(file.id);
 
-                    const glass = document.createElement('div');
-                    glass.className = 'glass-overlay';
+                    // 1. 勾選圖示 (SVG)
+                    const checkIcon = document.createElement('div');
+                    checkIcon.className = 'check-icon';
+                    checkIcon.innerHTML = '✓';
+
+                    // 2. 預覽圖示 (防止事件冒泡，避免點預覽時觸發選取)
+                    const previewBtn = document.createElement('div');
+                    previewBtn.className = 'preview-btn';
+                    previewBtn.innerHTML = '👁️'; // 簡單的 emoji，也可換 svg
+                    previewBtn.title = '預覽大圖';
+                    previewBtn.onclick = (e) => {
+                        e.stopPropagation(); // 阻止冒泡
+                        window.open(file.webContentLink, '_blank');
+                    };
 
                     const img = document.createElement('img');
                     img.className = 'gallery-img';
@@ -264,17 +323,82 @@
                     caption.className = 'caption';
                     caption.textContent = file.name.replace(/\.[^/.]+$/, "");
 
-                    glass.appendChild(img);
-                    glass.appendChild(caption);
-                    frame.appendChild(glass);
+                    frame.appendChild(checkIcon);
+                    frame.appendChild(previewBtn);
+                    frame.appendChild(img);
+                    frame.appendChild(caption);
                     col.appendChild(frame);
                     gallery.appendChild(col);
                 });
 
             } catch (err) {
                 console.error("Error", err);
-                document.getElementById('loading').innerHTML = `<span style="color:red">相片讀取失敗。</span>`;
+                document.getElementById('loading').innerHTML = `<span style="color:red">相片讀取失敗</span>`;
             }
+        }
+
+        // 切換選取狀態
+        function toggleSelection(fileId) {
+            const card = document.getElementById(`card-${fileId}`);
+            
+            if (selectedFiles.has(fileId)) {
+                // 取消選取
+                selectedFiles.delete(fileId);
+                card.classList.remove('selected');
+            } else {
+                // 加入選取
+                selectedFiles.add(fileId);
+                card.classList.add('selected');
+            }
+            
+            updateDownloadBar();
+        }
+
+        // 更新下方懸浮列
+        function updateDownloadBar() {
+            const bar = document.getElementById('download-bar');
+            const countText = document.getElementById('selected-count');
+            const count = selectedFiles.size;
+
+            countText.innerText = `已選取 ${count} 張`;
+
+            if (count > 0) {
+                bar.classList.add('active');
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        // 執行批次下載
+        function downloadSelected() {
+            if (selectedFiles.size === 0) return;
+
+            const count = selectedFiles.size;
+            if(!confirm(`準備下載 ${count} 張相片。\n\n注意：瀏覽器可能會阻擋多個檔案下載，請在網址列允許「彈出式視窗 (Pop-ups)」。`)) {
+                return;
+            }
+
+            // 轉換 Set 為 Array
+            const ids = Array.from(selectedFiles);
+            
+            // 由於瀏覽器安全限制，我們需要稍微延遲每個下載，避免被當成惡意軟體
+            ids.forEach((id, index) => {
+                const file = allFilesData[id];
+                if (file) {
+                    setTimeout(() => {
+                        // 建立隱藏的連結並點擊
+                        const link = document.createElement('a');
+                        link.href = file.webContentLink; // 這是 Google Drive 強制下載連結
+                        link.target = '_blank';
+                        link.download = file.name; // 嘗試指定檔名
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }, index * 800); // 每張間隔 0.8 秒
+                }
+            });
+            
+            // 下載後可以選擇是否要清除選取，這裡保留選取狀態方便使用者確認
         }
     </script>
 </body>
