@@ -97,6 +97,13 @@
             text-overflow: ellipsis;
             line-height: 1.4;
         }
+        
+        /* 新增：日期標籤 */
+        .date-badge {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
 
         /* Lightbox */
         #lightbox {
@@ -170,7 +177,6 @@
             background: #0063ce;
         }
 
-        /* 讀取狀態 */
         #save-btn.loading {
             background: #888;
             pointer-events: none;
@@ -228,7 +234,6 @@
         const FOLDER_ID = '1FU3pgdTyQe7XQC-RfX8h5vZBOzgtDLnr';
         const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
         
-        // 用來記錄目前正在檢視的檔案物件
         let currentFile = null;
 
         window.onload = async function() {
@@ -260,11 +265,13 @@
                 const response = await gapi.client.drive.files.list({
                     'pageSize': 100,
                     'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
-                    'fields': 'files(id, name, thumbnailLink, webContentLink, mimeType)',
+                    // ★重點：增加 createdTime 欄位以供排序確認
+                    'fields': 'files(id, name, thumbnailLink, webContentLink, mimeType, createdTime)',
+                    // ★重點：確保由 API 端進行倒序 (最新的在最上面)
                     'orderBy': 'createdTime desc'
                 });
 
-                const files = response.result.files;
+                let files = response.result.files;
                 const gallery = document.getElementById('gallery');
                 const loading = document.getElementById('loading');
                 
@@ -275,6 +282,11 @@
                     gallery.innerHTML = '<p class="text-center w-100">相簿是空的。</p>';
                     return;
                 }
+
+                // ★雙重保險：前端再排一次序 (以防 API 分頁造成順序不完全)
+                files.sort((a, b) => {
+                    return new Date(b.createdTime) - new Date(a.createdTime);
+                });
 
                 files.forEach(file => {
                     const col = document.createElement('div');
@@ -292,13 +304,22 @@
 
                     const captionArea = document.createElement('div');
                     captionArea.className = 'caption-area';
+                    
                     const captionText = document.createElement('div');
                     captionText.className = 'caption-text';
                     captionText.textContent = file.name.replace(/\.[^/.]+$/, "");
 
+                    // 選擇性：顯示簡單的日期 (例如 2023/10/25)
+                    // 這樣您可以視覺上確認順序是否正確
+                    const dateBadge = document.createElement('div');
+                    dateBadge.className = 'date-badge';
+                    const dateObj = new Date(file.createdTime);
+                    dateBadge.textContent = `${dateObj.getFullYear()}/${dateObj.getMonth()+1}/${dateObj.getDate()}`;
+
                     frame.appendChild(img);
                     col.appendChild(frame);
                     captionArea.appendChild(captionText);
+                    // captionArea.appendChild(dateBadge); // 如果想顯示日期，把這行註解打開
                     col.appendChild(captionArea);
                     gallery.appendChild(col);
                 });
@@ -309,17 +330,14 @@
             }
         }
 
-        // --- Lightbox 邏輯 ---
         function openLightbox(file) {
             currentFile = file;
             const lightbox = document.getElementById('lightbox');
             const img = document.getElementById('lightbox-img');
             
-            // 取得高解析度 (=s0)
             const highResUrl = file.thumbnailLink.replace('=s220', '=s0');
             img.src = highResUrl;
             
-            // 重置按鈕狀態
             const btn = document.getElementById('save-btn');
             const btnText = document.getElementById('save-text');
             btn.classList.remove('loading');
@@ -337,47 +355,32 @@
             }, 300);
         }
 
-        // --- ★★★ 核心：呼叫系統分享/儲存選單 ★★★ ---
         async function handleSave(event) {
-            event.stopPropagation(); // 阻止背景點擊關閉
-            
+            event.stopPropagation();
             if (!currentFile) return;
 
             const btn = document.getElementById('save-btn');
             const btnText = document.getElementById('save-text');
             
-            // 避免重複點擊
             if (btn.classList.contains('loading')) return;
 
-            // UI 轉圈圈
             btn.classList.add('loading');
             btnText.innerText = '下載中...';
 
             try {
-                // 1. 準備下載網址 (使用 s0 取得原圖)
-                // 這裡必須用 fetch 抓取 Blob，才能傳給手機的分享選單
                 const imageUrl = currentFile.thumbnailLink.replace('=s220', '=s0');
-                
                 const response = await fetch(imageUrl);
                 const blob = await response.blob();
-                
-                // 2. 建立檔案物件
-                // 注意：iOS Safari 需要正確的 mimetype (如 image/jpeg)
                 const fileObj = new File([blob], currentFile.name, { type: blob.type });
 
-                // 3. 檢查是否支援 Web Share API (手機原生分享)
                 if (navigator.canShare && navigator.canShare({ files: [fileObj] })) {
-                    // --- 手機模式：呼叫原生選單 ---
                     await navigator.share({
                         files: [fileObj],
                         title: '儲存相片',
                         text: '來自台科大相簿'
                     });
-                    // 如果使用者成功呼叫了選單 (或取消)，恢復按鈕
                     btnText.innerText = '已呼叫儲存';
                 } else {
-                    // --- 電腦/不支援模式：傳統下載 ---
-                    // 建立臨時連結下載
                     const downloadUrl = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = downloadUrl;
@@ -388,15 +391,12 @@
                     URL.revokeObjectURL(downloadUrl);
                     btnText.innerText = '下載完成';
                 }
-
             } catch (err) {
                 console.error("下載失敗", err);
-                // 如果 Share API 失敗，嘗試回退到開新視窗
                 window.open(currentFile.webContentLink, '_blank');
                 btnText.innerText = '已開啟原圖';
                 alert('自動儲存失敗，請長按圖片手動儲存。');
             } finally {
-                // 2秒後恢復按鈕原始狀態
                 setTimeout(() => {
                     btn.classList.remove('loading');
                     btnText.innerText = '儲存到相簿';
