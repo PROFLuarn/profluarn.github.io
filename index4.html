@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欒老師分享相簿</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f2f2f7; /* iOS 風格的淺灰背景，比純白更有層次感 */
+            --text-color: #1d1d1f; /* iOS 深色文字 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Noto Sans TC"; /* 優先使用系統字體，更像原生 App */
+            color: var(--text-color);
+            padding-bottom: 50px;
+        }
+
+        /* 標題區設計 - 簡約乾淨 */
+        header {
+            text-align: center;
+            padding: 50px 0 30px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-weight: 700;
+            color: var(--text-color);
+            font-size: 2rem;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #86868b; /* iOS 次要文字顏色 */
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        /* 載入動畫 */
+        #loading {
+            text-align: center;
+            color: #007aff; /* iOS 藍色 */
+            margin-top: 50px;
+        }
+
+        /* ----- 核心樣式：iPhone 水滴/毛玻璃質感 ----- */
+        .art-frame {
+            position: relative;
+            /* 1. 大圓角 */
+            border-radius: 18px; 
+            overflow: hidden; /* 讓內部圖片跟著圓角裁切 */
+            
+            /* 2. 玻璃本體背景：極淡的半透明漸層 */
+            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%);
+            
+            /* 3. 核心技術：背景模糊 (毛玻璃效果) */
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%); /* Safari 支援 */
+            
+            /* 4. 精緻的光影邊框：模擬光線照射在玻璃邊緣 */
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 
+                inset 0 1px 1px rgba(255, 255, 255, 0.4), /* 內部頂部高光 */
+                0 4px 10px rgba(0, 0, 0, 0.05), /* 柔和的淺陰影 */
+                0 10px 25px rgba(0, 0, 0, 0.08); /* 更深層的擴散陰影 */
+                
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* iOS 風格的彈性動畫曲線 */
+            cursor: pointer;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 移除舊的 glass-overlay 樣式，現在它只是個容器 */
+        .glass-overlay {
+            height: 100%;
+            position: relative;
+        }
+
+        /* 懸停效果：輕輕浮起，光影增強 */
+        .art-frame:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 
+                inset 0 1px 1px rgba(255, 255, 255, 0.6),
+                0 15px 35px rgba(0, 0, 0, 0.12), /* 陰影加深 */
+                0 5px 15px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 255, 255, 0.8); /* 邊框變亮 */
+            z-index: 10;
+        }
+
+        .gallery-img {
+            width: 100%;
+            aspect-ratio: 1 / 1; 
+            object-fit: cover;
+            display: block;
+            /* 圖片本身不需要圓角，因為外層 art-frame 已經設定 overflow: hidden */
+            transition: transform 0.5s ease;
+            /* 讓圖片稍微通透一點點，融合感更好 */
+            opacity: 0.95;
+        }
+
+        .art-frame:hover .gallery-img {
+            transform: scale(1.04); /* 懸停時微微放大 */
+            opacity: 1;
+        }
+
+        /* 標題條：也是毛玻璃風格 */
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            
+            /* 標題條的毛玻璃背景 */
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.4); /* 頂部細微亮線 */
+            
+            color: #333;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px 4px;
+            
+            opacity: 0; 
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 手機版優化：在小螢幕上直接顯示標題，不用懸停 */
+        @media (max-width: 768px) {
+            .caption {
+                opacity: 1;
+                padding: 8px 4px;
+                background: rgba(255, 255, 255, 0.75); /* 手機版稍微不透明一點，增加閱讀性 */
+            }
+            .art-frame {
+                 border-radius: 14px; /* 手機版圓角稍微小一點點 */
+            }
+        }
+
+        /* 電腦版懸停才顯示 */
+        @media (min-width: 769px) {
+            .art-frame:hover .caption {
+                opacity: 1;
+            }
+        }
+
+        /* Grid 間距微調 */
+        .col-4, .col-md-3, .col-lg-2 {
+            padding: 10px; /* 增加間距，讓水滴感更突出 */
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>欒老師分享相簿</h1>
+        <div class="subtitle">Photography Collection</div>
+    </header>
+
+    <div class="container-fluid">
+        <div id="loading">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2">正在讀取相片...</div>
+        </div>
+        
+        <div id="gallery" class="row justify-content-center px-3">
+            </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script>
+        // --------------- 設定區 ---------------
+        // 請填入您的 API Key
+        const API_KEY = 'AIzaSyADg7xg88ZAcxqM1aqEJiX0_qlHJuwImDI'; 
+        const FOLDER_ID = '1FU3pgdTyQe7XQC-RfX8h5vZBOzgtDLnr';
+        // -------------------------------------
+
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+
+        window.onload = async function() {
+            try {
+                const response = await fetch('./key.txt');
+                if (response.ok) {
+                    const text = await response.text();
+                    const fileKey = text.split('\n')[0].trim();
+                    if(fileKey) window.apiKeyToUse = fileKey;
+                }
+            } catch (e) {
+                console.log("Fallback to hardcoded key");
+            }
+            gapi.load('client', initClient);
+        };
+
+        function initClient() {
+            const key = window.apiKeyToUse || API_KEY;
+            if (key === 'YOUR_API_KEY_HERE') {
+                 // document.getElementById('loading').innerHTML = '<span style="color:red">請設定 API Key</span>';
+            }
+            gapi.client.init({
+                apiKey: key,
+                discoveryDocs: DISCOVERY_DOCS,
+            }).then(() => {
+                listFiles();
+            }).catch(error => {
+                document.getElementById('loading').innerHTML = 
+                    `<span style="color:red">初始化失敗</span><br><small>${JSON.stringify(error)}</small>`;
+            });
+        }
+
+        async function listFiles() {
+            try {
+                const response = await gapi.client.drive.files.list({
+                    'pageSize': 100,
+                    'q': `'${FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
+                    'fields': 'files(id, name, thumbnailLink, webContentLink)',
+                    'orderBy': 'createdTime desc'
+                });
+
+                const files = response.result.files;
+                const gallery = document.getElementById('gallery');
+                const loading = document.getElementById('loading');
+                
+                gallery.innerHTML = '';
+                loading.style.display = 'none';
+
+                if (!files || files.length === 0) {
+                    gallery.innerHTML = '<p class="text-center w-100">相簿是空的。</p>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const col = document.createElement('div');
+                    // 調整 RWD：平板 (md) 改為一列 3 張，視野更好
+                    col.className = 'col-4 col-md-4 col-lg-2 mb-3'; 
+
+                    const frame = document.createElement('div');
+                    frame.className = 'art-frame';
+                    frame.onclick = () => window.open(file.webContentLink, '_blank');
+
+                    const glass = document.createElement('div');
+                    glass.className = 'glass-overlay';
+
+                    const img = document.createElement('img');
+                    img.className = 'gallery-img';
+                    img.src = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''; 
+                    img.alt = file.name;
+                    img.loading = "lazy";
+
+                    const caption = document.createElement('div');
+                    caption.className = 'caption';
+                    caption.textContent = file.name.replace(/\.[^/.]+$/, "");
+
+                    glass.appendChild(img);
+                    glass.appendChild(caption);
+                    frame.appendChild(glass);
+                    col.appendChild(frame);
+                    gallery.appendChild(col);
+                });
+
+            } catch (err) {
+                console.error("Error", err);
+                document.getElementById('loading').innerHTML = `<span style="color:red">相片讀取失敗。</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
