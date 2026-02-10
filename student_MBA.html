@@ -116,7 +116,7 @@
 
     <script>
         const FALLBACK_PHOTO = "https://ntust2026.github.io/pic/1.jpg";
-        const SHEET_ID = "1GnotWBIBZOkgCfjxX4DxnnzvRrn0CLhv0wwLvx605qk"; // 已更新為新 ID
+        const SHEET_ID = "1GnotWBIBZOkgCfjxX4DxnnzvRrn0CLhv0wwLvx605qk"; 
 
         let students = [];
 
@@ -124,7 +124,7 @@
             const btn = document.getElementById('refreshBtn');
             const status = document.getElementById('refreshStatus');
             btn.classList.add('loading');
-            status.textContent = '⏳ 讀取中...';
+            status.textContent = '⏳ 排除重複並讀取中...';
 
             const oldScript = document.getElementById('gsheet-jsonp');
             if (oldScript) oldScript.remove();
@@ -132,23 +132,34 @@
             window.__sheetCallback = function(response) {
                 try {
                     const rows = response.table.rows;
-                    students = rows.map(row => {
+                    
+                    // 使用 Map 處理重複資料，Key 為學號
+                    // 後出現的資料會自動覆蓋掉舊的，達成「保留最近一筆」的效果
+                    const studentMap = new Map();
+
+                    rows.forEach(row => {
                         const cells = row.c;
-                        // 根據  的內容：B(1)=姓名, C(2)=學號, D(3)=網址
-                        const name = cells[1] ? cells[1].v : '';
-                        const id = cells[2] ? cells[2].v : '';
-                        const url = cells[3] ? cells[3].v : '';
-                        return {
-                            name,
-                            studentId: id,
-                            website: url,
-                            photo: url ? url.replace(/\/+$/, '') + '/pic/mypic.jpg' : FALLBACK_PHOTO
-                        };
-                    }).filter(s => s.name && s.name !== "姓名"); // 過濾標題列
+                        const name = cells[1] ? String(cells[1].v).trim() : '';
+                        const id = cells[2] ? String(cells[2].v).trim() : '';
+                        const url = cells[3] ? String(cells[3].v).trim() : '';
+
+                        // 過濾標題列並確保有名字與學號
+                        if (name && name !== "姓名" && id) {
+                            studentMap.set(id, {
+                                name,
+                                studentId: id,
+                                website: url,
+                                photo: url ? url.replace(/\/+$/, '') + '/pic/mypic.jpg' : FALLBACK_PHOTO
+                            });
+                        }
+                    });
+
+                    // 將 Map 轉換回陣列
+                    students = Array.from(studentMap.values());
 
                     renderStudents(students);
                     document.getElementById('totalStudents').textContent = students.length;
-                    status.textContent = '✅ 更新成功';
+                    status.textContent = '✅ 更新成功 (已保留最新資料)';
                 } catch (e) {
                     status.textContent = '❌ 讀取失敗';
                     console.error(e);
@@ -194,7 +205,6 @@
             renderStudents(filtered);
         });
 
-        // 飄動愛心背景
         function createHearts() {
             const container = document.getElementById('floatingHearts');
             setInterval(() => {
