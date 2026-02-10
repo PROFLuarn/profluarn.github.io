@@ -72,7 +72,6 @@
         .search-input:focus { border-color: #e91e63; box-shadow: 0 0 0 3px rgba(233,30,99,0.1); outline: none; }
         .search-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: #e91e63; }
 
-        /* ── Refresh Button ── */
         .refresh-bar { display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; }
         .refresh-btn {
             display: inline-flex; align-items: center; gap: 10px;
@@ -157,44 +156,41 @@
         let students = [];
         let filteredStudents = [];
 
-        /* ══════════════════════════════════════════
-           Use JSONP (script-tag injection) to bypass
-           CORS when opened from file:// or any origin
-           ══════════════════════════════════════════ */
         function fetchFromGoogleSheet() {
             const btn = document.getElementById('refreshBtn');
             const status = document.getElementById('refreshStatus');
 
             btn.classList.add('loading');
             status.className = 'refresh-status';
-            status.textContent = '⏳ 正在從 Google Sheet 讀取資料...';
+            status.textContent = '⏳ 排除重複並從 Google Sheet 讀取資料...';
 
-            // Clean up any previous JSONP script tags
             const oldScript = document.getElementById('gsheet-jsonp');
             if (oldScript) oldScript.remove();
 
-            // Define the global callback that Google will invoke
             window.__sheetCallback = function(response) {
                 try {
                     const rows = response.table.rows;
-                    const newStudents = [];
+                    
+                    // 使用 Map 處理重複資料，Key 為學號
+                    // 後出現的資料會覆蓋舊的，保留「最近一筆」
+                    const studentMap = new Map();
 
                     for (let i = 0; i < rows.length; i++) {
                         const cells = rows[i].c;
-                        // B=姓名(1), C=學號(2), D=網址(3)
                         const name      = cells[1] ? (cells[1].v || '').toString().trim() : '';
                         const studentId = cells[2] ? (cells[2].v || '').toString().trim() : '';
                         const website   = cells[3] ? (cells[3].v || '').toString().trim() : '';
 
-                        if (!name && !studentId && !website) continue;
-
-                        const baseUrl = website.replace(/\/+$/, '');
-                        const photo   = baseUrl + '/pic/mypic.jpg';
-
-                        newStudents.push({ name, studentId, website, photo });
+                        if (name && studentId && name !== "姓名") {
+                            const baseUrl = website.replace(/\/+$/, '');
+                            const photo   = baseUrl + '/pic/mypic.jpg';
+                            
+                            studentMap.set(studentId, { name, studentId, website, photo });
+                        }
                     }
 
-                    students = newStudents;
+                    // 轉回陣列格式
+                    students = Array.from(studentMap.values());
                     filteredStudents = [...students];
                     document.getElementById('searchInput').value = '';
                     updateCounts();
@@ -203,7 +199,7 @@
 
                     const now = new Date().toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
                     status.className = 'refresh-status success';
-                    status.textContent = '✅ 成功載入 ' + students.length + ' 筆資料（' + now + '）';
+                    status.textContent = '✅ 成功載入 ' + students.length + ' 筆資料（已排除重複，時間：' + now + '）';
                 } catch (err) {
                     console.error(err);
                     status.className = 'refresh-status error';
@@ -213,7 +209,6 @@
                 }
             };
 
-            // Inject a <script> tag — this is JSONP, no CORS restrictions
             const script = document.createElement('script');
             script.id = 'gsheet-jsonp';
             script.src = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID
@@ -229,7 +224,6 @@
             document.body.appendChild(script);
         }
 
-        /* ── Render cards ── */
         function renderStudents(list) {
             const grid = document.getElementById('studentGrid');
             const noRes = document.getElementById('noResults');
@@ -298,10 +292,9 @@
             }, 2000);
         }
 
-        /* ── Init ── */
         document.getElementById('searchInput').addEventListener('input', filterStudents);
         createFloatingHearts();
-        fetchFromGoogleSheet();   // auto-load on page open
+        fetchFromGoogleSheet();
     </script>
 </body>
 </html>
