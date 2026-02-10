@@ -115,7 +115,7 @@
 
     <script>
         const FALLBACK_PHOTO = "https://ntust2026.github.io/pic/1.jpg";
-        const SHEET_ID = "1WeTsZQeZSIiZ-4C3L3tHa1cHU-scE32Whx8--GbEKBQ"; // 已更新為新 ID
+        const SHEET_ID = "1WeTsZQeZSIiZ-4C3L3tHa1cHU-scE32Whx8--GbEKBQ"; //
 
         let students = [];
 
@@ -123,7 +123,7 @@
             const btn = document.getElementById('refreshBtn');
             const status = document.getElementById('refreshStatus');
             btn.classList.add('loading');
-            status.textContent = '⏳ 讀取中...';
+            status.textContent = '⏳ 檢查重複並讀取中...';
 
             const oldScript = document.getElementById('gsheet-jsonp');
             if (oldScript) oldScript.remove();
@@ -131,23 +131,31 @@
             window.__sheetCallback = function(response) {
                 try {
                     const rows = response.table.rows;
-                    students = rows.map(row => {
+                    const studentMap = new Map(); // 使用 Map 來處理重複學號
+
+                    rows.forEach(row => {
                         const cells = row.c;
-                        // 根據 Google Sheet 內容：B(1)=姓名, C(2)=學號, D(3)=網址 
                         const name = cells[1] ? cells[1].v : '';
-                        const id = cells[2] ? cells[2].v : '';
+                        const id = cells[2] ? String(cells[2].v).trim() : '';
                         const url = cells[3] ? cells[3].v : '';
-                        return {
-                            name,
-                            studentId: id,
-                            website: url,
-                            photo: url ? url.replace(/\/+$/, '') + '/pic/mypic.jpg' : FALLBACK_PHOTO
-                        };
-                    }).filter(s => s.name && s.name !== "姓名"); // 過濾標題列
+
+                        if (name && name !== "姓名" && id) {
+                            // 如果學號重複，後出現的（較新的）會覆蓋掉舊的
+                            studentMap.set(id, {
+                                name,
+                                studentId: id,
+                                website: url,
+                                photo: url ? url.replace(/\/+$/, '') + '/pic/mypic.jpg' : FALLBACK_PHOTO
+                            });
+                        }
+                    });
+
+                    // 將 Map 轉換回陣列
+                    students = Array.from(studentMap.values());
 
                     renderStudents(students);
                     document.getElementById('totalStudents').textContent = students.length;
-                    status.textContent = '✅ 更新成功';
+                    status.textContent = '✅ 更新成功 (已排除重複)';
                 } catch (e) {
                     status.textContent = '❌ 讀取失敗';
                     console.error(e);
@@ -188,12 +196,11 @@
             const term = e.target.value.toLowerCase();
             const filtered = students.filter(s => 
                 s.name.toLowerCase().includes(term) || 
-                s.studentId.toString().toLowerCase().includes(term)
+                s.studentId.toLowerCase().includes(term)
             );
             renderStudents(filtered);
         });
 
-        // 飄動愛心背景
         function createHearts() {
             const container = document.getElementById('floatingHearts');
             setInterval(() => {
