@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>臺科精誠匯 - 後EMBA計畫分析報告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Microsoft JhengHei", "PingFang TC", Arial, sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 40px; text-align: center; }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        header .subtitle { font-size: 1.3em; opacity: 0.95; margin-bottom: 15px; }
+        header .motto { font-size: 1.1em; font-style: italic; background: rgba(255,255,255,0.15); padding: 15px 25px; border-radius: 10px; display: inline-block; margin-top: 10px; }
+        .dragon-badge { display: inline-block; background: #ff6b6b; color: white; padding: 5px 15px; border-radius: 20px; margin-top: 15px; }
+        nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px 40px; }
+        nav a { display: inline-block; margin-right: 15px; color: white; text-decoration: none; font-weight: bold; padding: 8px 15px; border-radius: 5px; }
+        nav a:hover { background: rgba(255,255,255,0.25); }
+        section { padding: 35px 40px; border-bottom: 1px solid #eee; }
+        section:last-child { border-bottom: none; }
+        h2 { color: #1e3c72; font-size: 1.7em; margin-bottom: 25px; padding-bottom: 10px; border-bottom: 3px solid #667eea; }
+        h3 { color: #2a5298; font-size: 1.3em; margin: 25px 0 15px; }
+        h4 { color: #1e3c72; margin: 20px 0 10px; }
+        .highlight-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin: 20px 0; }
+        .highlight-box h3 { color: white; margin-top: 0; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border-radius: 10px; }
+        .info-table th { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px; text-align: left; }
+        .info-table td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+        .info-table tr:nth-child(even) { background: #f8f9fa; }
+        .course-module { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 12px; margin: 15px 0; }
+        .module-title { font-size: 1.2em; font-weight: bold; color: #1e3c72; margin-bottom: 15px; display: flex; align-items: center; }
+        .module-number { background: #667eea; color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-weight: bold; }
+        .course-list { list-style: none; padding: 0; }
+        .course-list li { padding: 12px 15px; margin: 8px 0; background: white; border-radius: 8px; padding-left: 35px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .course-list li:before { content: "📚"; position: absolute; left: 10px; }
+        .instructor { color: #667eea; font-weight: bold; }
+        .feature-list { list-style: none; padding: 0; }
+        .feature-list li { padding: 10px 0; }
+        .feature-list li:before { content: "✅"; margin-right: 10px; }
+        .weakness-list li:before { content: "⚠️"; }
+        .suggestion-list li:before { content: "💡"; }
+        .schedule-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .schedule-table th { background: #667eea; color: white; padding: 12px; }
+        .schedule-table td { padding: 10px 8px; border: 1px solid #ddd; text-align: center; }
+        .overseas { background: linear-gradient(135deg, #ffe259 0%, #ffa751 100%); padding: 20px; border-radius: 12px; margin: 15px 0; }
+        .overseas h4 { color: #d35400; margin-top: 0; }
+        .note-box { background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 10px; margin: 20px 0; }
+        .note-box h4 { color: #856404; margin-top: 0; }
+        .strengths-section, .weaknesses-section, .suggestions-section { margin: 25px 0; padding: 20px; border-radius: 12px; }
+        .strengths-section { background: linear-gradient(135deg, #d5f5e3 0%, #a9dfbf 100%); }
+        .weaknesses-section { background: linear-gradient(135deg, #fadbd8 0%, #f5b7b1 100%); }
+        .suggestions-section { background: linear-gradient(135deg, #d4e6f1 0%, #a9cce3 100%); }
+        .swot-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 20px 0; }
+        .swot-box { padding: 20px; border-radius: 15px; }
+        .swot-box.strength { background: #d5f5e3; border: 2px solid #27ae60; }
+        .swot-box.weakness { background: #fadbd8; border: 2px solid #e74c3c; }
+        .swot-box.opportunity { background: #d4e6f1; border: 2px solid #3498db; }
+        .swot-box.threat { background: #fdebd0; border: 2px solid #f39c12; }
+        .swot-box h4 { margin-bottom: 15px; }
+        .swot-box.strength h4 { color: #27ae60; }
+        .swot-box.weakness h4 { color: #e74c3c; }
+        .swot-box.opportunity h4 { color: #3498db; }
+        .swot-box.threat h4 { color: #f39c12; }
+        footer { background: #1e3c72; color: white; text-align: center; padding: 30px; }
+        @media (max-width: 768px) { .swot-grid { grid-template-columns: 1fr; } header h1 { font-size: 1.8em; } section { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏫 臺科精誠匯 後EMBA計畫</h1>
+            <p class="subtitle">臺灣科技大學後EMBA課程分析報告</p>
+            <p class="motto">「精於管理、誠於實踐」<br>「匠心築業，誠信領航」</p>
+            <span class="dragon-badge">🦞 澳龍編製</span>
+        </header>
+        
+        <nav>
+            <a href="#vision">🏛️ 願景定位</a>
+            <a href="#curriculum">📚 課程規劃</a>
+            <a href="#schedule">📅 時程安排</a>
+            <a href="#analysis">🔍 優劣分析</a>
+            <a href="#swot">📊 SWOT分析</a>
+            <a href="#recommendations">💡 建議</a>
+        </nav>
+        
+        <section id="vision">
+            <h2>🏛️ 願景與定位</h2>
+            <div class="highlight-box">
+                <h3>臺科精誠匯——匠心築業，誠信領航</h3>
+                <p>承載著對專業卓越與誠信品格的最高追求，以實現「精於管理、誠於實踐」的新管理精神。</p>
+            </div>
+            <h3>核心理念</h3>
+            <table class="info-table">
+                <thead><tr><th>面向</th><th>內涵</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>校訓精神</strong></td><td>臺科大「精於做事、誠於待人」的校訓精神</td></tr>
+                    <tr><td><strong>核心價值</strong></td><td>精於管理、誠於實踐</td></tr>
+                    <tr><td><strong>定位</strong></td><td>高階領袖的交流平台，融合產業智慧與國際視野的學習殿堂</td></tr>
+                    <tr><td><strong>使命</strong></td><td>攜手推動社會與產業的智慧轉型與永續發展</td></tr>
+                    <tr><td><strong>基石與方向</strong></td><td>科技創新為基石，誠信領航為方向</td></tr>
+                </tbody>
+            </table>
+            <div class="note-box">
+                <h4>💡 澳龍分析：願景定位的優勢</h4>
+                <ul class="feature-list">
+                    <li>✅ 有明確的價值主張，與臺科大校訓緊密結合</li>
+                    <li>✅ 「精於管理、誠於實踐」呼應臺科大「務實」基因</li>
+                    <li>✅ 「匠心築業，誠信領航」口號有記憶點</li>
+                    <li>✅ 強調「科技創新」與「誠信領航」的結合，具差異化</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section id="curriculum">
+            <h2>📚 課程規劃</h2>
+            <p>課程內容涵蓋「<strong>智慧營運與數位轉型</strong>」、「<strong>國際情勢與戰略格局</strong>」、「<strong>投資理財與數位金融</strong>」、「<strong>韌性永續與企業傳承</strong>」四大模組。</p>
+            
+            <div class="course-module">
+                <div class="module-title"><span class="module-number">1</span>智慧營運與數位轉型</div>
+                <ul class="course-list">
+                    <li><strong>數位轉型領導學：打造智慧新未來</strong><br><span class="instructor">華碩電腦 許先越執行長</span></li>
+                    <li><strong>智慧營運5.0：AI重塑企業競爭力</strong><br><span class="instructor">臺灣科技大學 王孔政特聘教授</span></li>
+                    <li><strong>生成式AI戰略力：開啟智慧新商機與格局</strong><br><span class="instructor">臺灣科技大學 欒斌教授、教育部師鐸獎得主</span></li>
+                    <li><strong>高效組織DNA：從再造設計到績效驅動的策略實踐</strong><br><span class="instructor">城邦媒體集團 何飛鵬首席執行長</span></li>
+                </ul>
+            </div>
+            
+            <div class="course-module">
+                <div class="module-title"><span class="module-number">2</span>國際情勢與戰略格局</div>
+                <ul class="course-list">
+                    <li><strong>供應鏈新戰局：地緣政治下的全球佈局</strong><br><span class="instructor">電子時報 黃欽勇社長</span></li>
+                    <li><strong>國際經濟新秩序：後美元時代的變局</strong><br><span class="instructor">台灣經濟研究院 孫明德主任</span></li>
+                    <li><strong>跨國轉型與價值鏈升級：從台灣製造到全球佈局</strong><br><span class="instructor">研揚科技 莊永順董事長</span></li>
+                </ul>
+            </div>
+            
+            <div class="course-module">
+                <div class="module-title"><span class="module-number">3</span>投資理財與數位金融</div>
+                <ul class="course-list">
+                    <li><strong>財富均衡人生：全球金融趨勢與資產配置</strong><br><span class="instructor">元大金控 周筱玲執行長</span></li>
+                    <li><strong>城市資本戰略：不動產投資的佈局思維</strong><br><span class="instructor">隆遠集團 莊子華董事長</span></li>
+                    <li><strong>資本的力量：企業投資與併購的成長戰略</strong><br><span class="instructor">樺漢科技 朱復銓董事長</span></li>
+                    <li><strong>數位金融新秩序：虛擬資產，風險與治理</strong><br><span class="instructor">台灣金融科技協會 蔡玉玲榮譽理事</span></li>
+                </ul>
+            </div>
+            
+            <div class="course-module">
+                <div class="module-title"><span class="module-number">4</span>韌性永續與企業傳承</div>
+                <ul class="course-list">
+                    <li><strong>韌性企業學：提升不確定時代的競爭優勢</strong><br><span class="instructor">臺灣科技大學 盧希鵬特聘教授</span></li>
+                    <li><strong>淨零競爭力：ESG永續經營新戰略</strong><br><span class="instructor">玉山金控 張綸宇永續長</span></li>
+                    <li><strong>說出影響力：領導者的溝通藝術與談判魅力</strong><br><span class="instructor">影響力品牌學院 丁菱娟創辦人</span></li>
+                    <li><strong>接班傳承新局：家族企業治理與領導之道</strong><br><span class="instructor">大聯大控股 曾國棟永續長</span></li>
+                    <li><strong>健康力覺醒：打造企業永續的幸福動能</strong><br><span class="instructor">臺北市立關渡醫院 陳亮恭院長</span></li>
+                    <li><strong>美學思維力：從藝術鑑賞到領導品味的修煉</strong><br><span class="instructor">美力覺醒文化 趙孝萱創辦人</span></li>
+                </ul>
+            </div>
+        </section>
+        
+        <section id="schedule">
+            <h2>📅 時程安排</h2>
+            <table class="schedule-table">
+                <thead><tr><th>時間</th><th>活動內容</th></tr></thead>
+                <tbody>
+                    <tr><td>2026/8/22</td><td><strong>開學典禮</strong> - 財富均衡人生（孫明德主任）</td></tr>
+                    <tr><td>2026/9</td><td>演講2、3</td></tr>
+                    <tr><td>2026/10</td><td>演講4、5</td></tr>
+                    <tr><td>2026/11</td><td>演講6、7</td></tr>
+                    <tr><td>2026/12</td><td>演講8、9</td></tr>
+                    <tr><td>2027/1</td><td><strong>國內工廠參訪</strong></td></tr>
+                    <tr><td>2027/2</td><td>演講10、11</td></tr>
+                    <tr><td>2027/3</td><td>演講12、13</td></tr>
+                    <tr><td>2027/4</td><td>演講14、15</td></tr>
+                    <tr><td>2027/5</td><td>演講16、17</td></tr>
+                    <tr><td>2027/6</td><td><strong>英德海外參訪及授證</strong></td></tr>
+                </tbody>
+            </table>
+            
+            <div class="overseas">
+                <h4>🌍 英德海外參訪（2027/6）</h4>
+                <ul>
+                    <li><strong>德國參訪：</strong>賓士、保時捷、BMW、奧迪等車廠工業4.0參訪</li>
+                    <li><strong>司徒加特大學授課：</strong>德國當地大學學術交流</li>
+                    <li><strong>英國城堡授證：</strong>結業典禮，城堡舉行，極具儀式感</li>
+                </ul>
+            </div>
+            
+            <h3>📊 課程分布統計</h3>
+            <table class="info-table">
+                <thead><tr><th>模組</th><th>課程數</th><th>師資來源</th></tr></thead>
+                <tbody>
+                    <tr><td>智慧營運與數位轉型</td><td>4門</td><td>業界執行長 + 校內教授</td></tr>
+                    <tr><td>國際情勢與戰略格局</td><td>3門</td><td>產業分析師 + 董事長</td></tr>
+                    <tr><td>投資理財與數位金融</td><td>4門</td><td>金融業高階主管</td></tr>
+                    <tr><td>韌性永續與企業傳承</td><td>6門</td><td>教授 + 業界領袖</td></tr>
+                    <tr><td><strong>總計</strong></td><td><strong>17+場演講</strong></td><td><strong>產官學多元師資</strong></td></tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section id="analysis">
+            <h2>🔍 優劣分析</h2>
+            <div class="strengths-section">
+                <h3>✅ 優點與亮點</h3>
+                <ul class="feature-list">
+                    <li><strong>四大模組設計完善</strong> — 涵蓋數位轉型、國際、金融、傳承，與臺科大優勢完美結合</li>
+                    <li><strong>師資陣容堅強</strong> — 涵蓋20+位產官學重量級師資，兼具理論與實務</li>
+                    <li><strong>本土師資占比高</strong> — 以台灣本地企業領袖為主，親切且實用性高</li>
+                    <li><strong>AI課程領先</strong> — 「生成式AI戰略力」由欒帥授課，具獨家特色</li>
+                    <li><strong>海外參訪高級</strong> — 德國BMW、賓士、保時捷、奧迪工業4.0參訪，非常有吸引力</li>
+                    <li><strong>英國城堡結業</strong> — 儀式感十足，印象深刻</li>
+                    <li><strong>時程完整</strong> — 10個月課程，安排合理有序</li>
+                    <li><strong>國內參訪</strong> — 2027/1安排國內工廠參訪，理論與實務結合</li>
+                    <li><strong>傳承與健康兼顧</strong> — 包含「接班傳承」與「健康力覺醒」，全方位關懷</li>
+                    <li><strong>美學素養</strong> — 「美學思維力」課程，提升領導者品味</li>
+                </ul>
+            </div>
+            
+            <div class="weaknesses-section">
+                <h3>⚠️ 需要注意與改進之處</h3>
+                <ul class="feature-list weakness-list">
+                    <li><strong>學費未定</strong> — 尚未對外公布具體學費，建議儘早訂定以利招生</li>
+                    <li><strong>招生人數目標不明</strong> — 建議設定明確的招生名額（如35-50人）</li>
+                    <li><strong>招生簡章尚未公布</strong> — 需加快腳步以趕上2026/8開學</li>
+                    <li><strong>報名資格未說明</strong> — 建議比照台大E勢泮，限定EMBA畢業生或同等學力</li>
+                    <li><strong>學分認證</strong> — 是否為學位學分班？學分是否可認證？</li>
+                    <li><strong>與台大/交大差異化</strong> — 雖然定位科技，但部分課程與一般EMBA類似，需更強調「科技」元素</li>
+                    <li><strong>沒有AI/科技深度課程</strong> — 「生成式AI」僅1門課，可考慮增加半導體、5G、區塊鏈等課程</li>
+                    <li><strong>Alumni網絡</strong> — 首屆學生來源與校友會運作需提前規劃</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section id="swot">
+            <h2>📊 SWOT分析：臺科精誠匯</h2>
+            <div class="swot-grid">
+                <div class="swot-box strength">
+                    <h4>💪 優勢（Strengths）</h4>
+                    <ul class="feature-list">
+                        <li>臺科大在科技業、製造業有豐富校友資源</li>
+                        <li>實務導向基因，與EMBA精神契合</li>
+                        <li>AI/數位科技專長，可結合前沿議題</li>
+                        <li>地理位置優越（南港、內湖科技園區）</li>
+                        <li>師資陣容堅強，產官學兼具</li>
+                        <li>海外參訪品質高（德國車廠+英國城堡）</li>
+                        <li>欽帥親自授課「生成式AI」，獨家特色</li>
+                    </ul>
+                </div>
+                <div class="swot-box weakness">
+                    <h4>⚠️ 劣勢（Weaknesses）</h4>
+                    <ul class="feature-list weakness-list">
+                        <li>後EMBA市場由台大/政大主導，品牌知名度較低</li>
+                        <li>管理學院規模相對較小</li>
+                        <li>EMBA校友數量較少</li>
+                        <li>缺乏後EMBA辦學經驗</li>
+                        <li>學費、招生簡章尚未公布</li>
+                        <li>首屆無校友網絡</li>
+                    </ul>
+                </div>
+                <div class="swot-box opportunity">
+                    <h4>🔥 機會（Opportunities）</h4>
+                    <ul class="feature-list">
+                        <li>科技業EMBA畢業生缺乏專屬後EMBA</li>
+                        <li>產業需求強勁，科技業高階主管持續進修</li>
+                        <li>可專攻「科技領導」、「數位轉型」定位</li>
+                        <li>結合臺灣AI浪潮</li>
+                        <li>與台大E勢泮、交大同行致遠班錯位競爭</li>
+                    </ul>
+                </div>
+                <div class="swot-box threat">
+                    <h4>🚨 威脅（Threats）</h4>
+                    <ul class="feature-list weakness-list">
+                        <li>台大、交大已搶占市場</li>
+                        <li>坊間培訓機構競爭</li>
+                        <li>企業培訓預算可能受景氣影響</li>
+                        <li>師資可能被其他學校磁吸</li>
+                        <li>招生時間緊迫（2026/8開學）</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section id="recommendations">
+            <h2>💡 與競爭對手比較與建議</h2>
+            <h3>📊 三校後EMBA比較</h3>
+            <table class="info-table">
+                <thead><tr><th>項目</th><th>臺科精誠匯</th><th>台大E勢泮</th><th>交大同行致遠班</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>定位</strong></td><td>科技創新、數位轉型</td><td>轉型升級、創新創業、傳承接班</td><td>高科技產業、異業學習</td></tr>
+                    <tr><td><strong>課程模組</strong></td><td>4大模組（17+場演講）</td><td>議題導向</td><td>個案教學</td></tr>
+                    <tr><td><strong>師資特色</strong></td><td>本土企業領袖為主</td><td>台大管院師資</td><td>交大校友+產業界</td></tr>
+                    <tr><td><strong>海外參訪</strong></td><td>德國BMW/賓士/英國城堡</td><td>無</td><td>法國商學院</td></tr>
+                    <tr><td><strong>學費</strong></td><td>未定（建議50-60萬）</td><td>約100.8萬</td><td>約55.9萬</td></tr>
+                    <tr><td><strong>開學時間</strong></td><td>2026/8</td><td>2019起</td><td>已辦理多年</td></tr>
+                    <tr><td><strong>獨家特色</strong></td><td>欽帥親授AI課</td><td>全台首創</td><td>科技業網絡</td></tr>
+                </tbody>
+            </table>
+            
+            <h3>🎯 澳龍的具體建議</h3>
+            <div class="note-box">
+                <h4>📋 短期行動（1-2個月內）</h4>
+                <ul>
+                    <li>盡快訂定學費（建議50-60萬區間，與交大競爭）</li>
+                    <li>公布招生簡章，設定招生名額35-50人</li>
+                    <li>說明報名資格（建議限定EMBA畢業或企業高階主管）</li>
+                    <li>確認所有師資的授課時間</li>
+                </ul>
+            </div>
+            <div class="note-box">
+                <h4>🚀 課程優化建議</h4>
+                <ul>
+                    <li>可考慮增加「半導體產業戰略」或「區塊鏈應用」課程</li>
+                    <li>建議增加「AI應用工作坊」實作環節</li>
+                    <li>可考慮與國外頂尖大學（如MIT）合作授證</li>
+                </ul>
+            </div>
+            <div class="note-box">
+                <h4>🌐 招生宣傳建議</h4>
+                <ul>
+                    <li>強調「欽帥親自授課」的獨家特色</li>
+                    <li>宣傳德國車廠參訪 + 英國城堡結業的獨家行程</li>
+                    <li>鎖定科技業高階主管精準招生</li>
+                    <li>利用臺科大校友網絡宣傳</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section>
+            <h2>🦞 結論</h2>
+            <div class="highlight-box">
+                <h3>欒帥，臺科精誠匯的規劃非常完整且具競爭力！</h3>
+                <p>與台大E勢泮、交大同行致遠班相比，臺科精誠匯有三大獨家優勢：</p>
+                <ul class="feature-list">
+                    <li>1. <strong>欽帥親自授課</strong> — 「生成式AI戰略力」是獨家特色</li>
+                    <li>2. <strong>德國車廠參訪</strong> — BMW、賓士、保時捷、奧迪工業4.0，吸引力極強</li>
+                    <li>3. <strong>科技精準定位</strong> — 專攻科技業高階主管，與台大/交大錯位</li>
+                </ul>
+                <p style="margin-top: 20px;">建議盡快公布學費與招生簡章，抓緊時間招生，趕上2026/8開學！</p>
+            </div>
+        </section>
+        
+        <footer>
+            <p>🦞 報告編製：澳龍（欒帥的私人小助手）</p>
+            <p>編製日期：2026年3月2日</p>
+        </footer>
+    </div>
+</body>
+</html>
