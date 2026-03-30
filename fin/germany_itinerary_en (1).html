@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Travel Itinerary – Germany 2026</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: #1a1e26; line-height: 1.38; background: #fff; }
+
+  .hdr { background: #1a2a4a; color: white; padding: 7px 12px 6px; border-bottom: 3px solid #9a7830; }
+  .hdr-top { display: table; width: 100%; }
+  .hdr-left { display: table-cell; vertical-align: middle; }
+  .hdr-right { display: table-cell; vertical-align: middle; text-align: right; white-space: nowrap; }
+  .hdr-label { font-size: 6pt; letter-spacing: .18em; text-transform: uppercase; color: rgba(200,168,75,.75); margin-bottom: 1px; }
+  .hdr-title { font-size: 12pt; font-weight: bold; color: #eef2fa; }
+  .hdr-sub { font-size: 7pt; color: rgba(200,215,240,.75); margin-top: 1px; }
+  .hdr-meta { display: inline-table; border-collapse: collapse; margin-left: 6px; }
+  .hdr-meta td { padding: 2px 8px; border-left: 1px solid rgba(255,255,255,.15); text-align: center; vertical-align: middle; }
+  .hdr-meta td:first-child { border-left: none; }
+  .meta-lbl { font-size: 5.5pt; letter-spacing: .14em; text-transform: uppercase; color: rgba(200,215,240,.65); display: block; margin-bottom: 1px; }
+  .meta-val { font-size: 7.5pt; color: #e8c870; font-weight: bold; display: block; }
+
+  .wrap { padding: 6px 10px 5px; }
+
+  .itin { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .itin thead th { background: #263d6b; color: rgba(220,228,245,.9); font-size: 6pt; font-weight: bold; letter-spacing: .16em; text-transform: uppercase; padding: 5px 7px; text-align: left; border-right: 1px solid rgba(255,255,255,.08); }
+  .itin thead th:last-child { border-right: none; }
+  .c-day { width: 5%; } .c-date { width: 9%; } .c-loc { width: 14%; } .c-act { width: 48%; } .c-acc { width: 24%; }
+
+  .itin tbody td { padding: 5px 7px; vertical-align: top; border-right: 1px solid #dde4ee; border-bottom: 1px solid #dde4ee; font-size: 7.8pt; line-height: 1.38; overflow: hidden; word-wrap: break-word; }
+  .itin tbody td:last-child { border-right: none; }
+
+  .td-day { background: #e8eef8; border-right: 2.5px solid #263d6b !important; text-align: center; vertical-align: middle; }
+  .day-n { font-size: 13pt; font-weight: bold; color: #1a2a4a; line-height: 1; display: block; }
+  .day-lbl { font-size: 5pt; letter-spacing: .12em; text-transform: uppercase; color: #8a92a0; display: block; }
+
+  .transit td { background: #f5f6f8; color: #5a6070; }
+  .transit .td-day { background: #eceef2; border-right-color: #9aa0b0 !important; }
+  .transit .day-n { color: #8a92a0; }
+
+  .d-main { font-weight: bold; font-size: 7.8pt; }
+  .d-sub { font-size: 6.5pt; color: #6a7080; margin-top: 1px; }
+  .l-from { font-weight: bold; font-size: 7.8pt; color: #1a2a4a; }
+  .l-to { font-size: 7pt; color: #6a7080; margin-top: 2px; }
+  .l-km { display: inline-block; margin-top: 3px; background: #eef5f0; border: 1px solid #b8d4c0; border-radius: 2px; padding: 1px 5px; font-size: 6pt; color: #2a5c3a; }
+
+  .act-row { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dotted #dde4ee; }
+  .act-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .act-time { font-size: 6.5pt; color: #263d6b; font-weight: bold; margin-bottom: 1px; }
+  .act-body { font-size: 7.8pt; }
+  .act-body b { color: #1a2a4a; }
+  .sub-row { padding-left: 8px; border-left: 2px solid #c8d4e8; margin-top: 2px; font-size: 7.4pt; color: #5a6070; }
+  .sub-lbl { font-weight: bold; color: #263d6b; margin-right: 3px; }
+  .tag { display: inline-block; border-radius: 2px; padding: 1px 5px; font-size: 6.2pt; margin-top: 2px; }
+  .tag-spa { background: #eef4fa; border: 1px solid rgba(42,74,106,.25); color: #2a4a6a; }
+  .tag-dinner { background: #fef5f0; border: 1px solid rgba(180,80,40,.3); color: #a04020; }
+
+  .acc-name { font-weight: bold; color: #1a2a4a; font-size: 7.8pt; }
+  .acc-note { font-size: 6.8pt; color: #6a7080; margin-top: 2px; line-height: 1.35; }
+  .acc-price { font-size: 6.8pt; color: #6a7080; margin-top: 2px; }
+  .acc-price b { color: #1a2a4a; }
+  .dash { font-size: 7pt; color: #8a92a0; font-style: italic; }
+
+  .notes-box { margin-top: 5px; padding: 5px 9px; border: 1px solid #c8d0dc; border-left: 3px solid #263d6b; background: #f8fafd; font-size: 7pt; line-height: 1.5; color: #5a6070; }
+  .notes-box b { color: #1a2a4a; font-size: 6pt; letter-spacing: .12em; text-transform: uppercase; display: block; margin-bottom: 3px; }
+
+  .tnotes { margin-top: 5px; }
+  .tnotes-hdr { font-size: 6.5pt; font-weight: bold; letter-spacing: .14em; text-transform: uppercase; color: #1a2a4a; border-bottom: 1.5px solid #9a7830; padding-bottom: 2px; margin-bottom: 4px; }
+  .tnotes-tbl { width: 100%; border-collapse: collapse; font-size: 7pt; line-height: 1.42; table-layout: fixed; }
+  .tnotes-tbl td { vertical-align: top; padding: 0 7px 0 0; border-right: 1px solid #dde4ee; }
+  .tnotes-tbl td:first-child { padding-left: 0; }
+  .tnotes-tbl td:last-child { border-right: none; padding-right: 0; }
+  .tn-hdr { font-weight: bold; display: block; margin-bottom: 2px; }
+
+  .footer { margin-top: 4px; padding-top: 3px; border-top: 1px solid #c8d0dc; text-align: center; font-size: 6pt; color: #8a92a0; letter-spacing: .1em; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-left">
+      <div class="hdr-label">Official Travel Itinerary</div>
+      <div class="hdr-title">Germany — Bavaria &amp; Swabia</div>
+      <div class="hdr-sub">Munich · Berchtesgaden · Ingolstadt · Stuttgart &nbsp;|&nbsp; Tourism &amp; Sightseeing</div>
+    </div>
+    <div class="hdr-right">
+      <table class="hdr-meta"><tr>
+        <td><span class="meta-lbl">Departure (TW)</span><span class="meta-val">24 May 2026</span></td>
+        <td><span class="meta-lbl">Arrival (DE)</span><span class="meta-val">25 May 2026</span></td>
+        <td><span class="meta-lbl">Departure (DE)</span><span class="meta-val">30 May 2026</span></td>
+        <td><span class="meta-lbl">Return (TW)</span><span class="meta-val">31 May 2026</span></td>
+        <td><span class="meta-lbl">Duration</span><span class="meta-val">8D / 7N</span></td>
+        <td><span class="meta-lbl">Nationality</span><span class="meta-val">TAIWAN</span></td>
+        <td><span class="meta-lbl">Purpose</span><span class="meta-val">Tourism</span></td>
+      </tr></table>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<table class="itin">
+  <thead>
+    <tr>
+      <th class="c-day">Day</th>
+      <th class="c-date">Date</th>
+      <th class="c-loc">Location / Route</th>
+      <th class="c-act">Activities &amp; Schedule</th>
+      <th class="c-acc">Accommodation</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <tr class="transit">
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">1</span></td>
+      <td><div class="d-main">24 May</div><div class="d-sub">Sunday</div></td>
+      <td><div class="l-from">Taiwan (TPE)</div><div class="l-to">En route to Germany</div></td>
+      <td><div class="act-row"><div class="act-body">Depart from <b>Taoyuan International Airport (TPE)</b>, Taiwan. Long-haul flight to Munich.</div></div></td>
+      <td><div class="dash">— In-flight overnight —</div></td>
+    </tr>
+
+    <tr>
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">2</span></td>
+      <td><div class="d-main">25 May</div><div class="d-sub">Monday</div></td>
+      <td><div class="l-from">Munich (MUC)</div><div class="l-to">→ Berchtesgaden</div><div class="l-km">200 km</div></td>
+      <td>
+        <div class="act-row"><div class="act-time">07:30</div><div class="act-body">Arrive at <b>Munich Airport Terminal 2 (MUC T2)</b>. Group pick-up.</div></div>
+        <div class="act-row"><div class="act-body">Drive 200 km south to <b>Berchtesgaden</b>.</div></div>
+        <div class="act-row"><div class="act-body">Boat tour on <b>Konigssee (King's Lake)</b>. Visit St. Bartholomae Church.</div></div>
+        <div class="act-row"><div class="act-body">Hotel indoor panoramic pool &amp; outdoor whirlpool available.</div><div><span class="tag tag-spa">Bring swimwear</span></div></div>
+      </td>
+      <td>
+        <div class="acc-name">Edelweiss Hotel Berchtesgaden</div>
+        <div class="acc-note">Indoor pool · Outdoor whirlpool · Sauna &amp; Spa</div>
+        <div class="acc-price">Twin: <b>€386</b>/room &nbsp; Single: <b>€240</b>/room</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">3</span></td>
+      <td><div class="d-main">26 May</div><div class="d-sub">Tuesday</div></td>
+      <td><div class="l-from">Berchtesgaden</div><div class="l-to">→ Munich</div><div class="l-km">160 km</div></td>
+      <td>
+        <div class="act-row"><div class="act-body">Visit <b>Kehlsteinhaus (Eagle's Nest)</b>, 1,834 m elevation. Panoramic Alpine views.</div></div>
+        <div class="act-row"><div class="act-body">Tour <b>Berchtesgaden Salt Mine (Salzbergwerk)</b>. Underground salt lake boat ride.</div></div>
+        <div class="act-row"><div class="act-body">Drive 160 km north to <b>Munich</b>. Check in to hotel.</div></div>
+      </td>
+      <td>
+        <div class="acc-name">Hampton by Hilton Munich City North</div>
+        <div class="acc-note">Munich, city centre north</div>
+        <div class="acc-price"><b>€98.70</b>/single/night (4 rooms)</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">4</span></td>
+      <td><div class="d-main">27 May</div><div class="d-sub">Wednesday</div></td>
+      <td><div class="l-from">Munich</div></td>
+      <td>
+        <div class="act-row"><div class="act-time">12:00 – 14:00</div><div class="act-body">Guided factory tour at <b>BMW Automobile Factory</b>, Munich.</div></div>
+        <div class="act-row">
+          <div class="act-body"><b>Afternoon — one option:</b></div>
+          <div class="sub-row"><span class="sub-lbl">A.</span>Dachau Concentration Camp Memorial, 30 km (closes 17:00)</div>
+          <div class="sub-row"><span class="sub-lbl">B.</span>Munich Old Town (Marienplatz, English Garden)</div>
+        </div>
+      </td>
+      <td>
+        <div class="acc-name">Hampton by Hilton Munich City North</div>
+        <div class="acc-note">Continuing stay (breakfast included)</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">5</span></td>
+      <td><div class="d-main">28 May</div><div class="d-sub">Thursday</div></td>
+      <td><div class="l-from">Munich</div><div class="l-to">→ Ingolstadt → Stuttgart</div><div class="l-km">~330 km</div></td>
+      <td>
+        <div class="act-row"><div class="act-body"><b>Morning (flexible):</b> Ingolstadt Village Outlet or Ingolstadt Old Town.</div></div>
+        <div class="act-row"><div class="act-time">13:00 – 14:00</div><div class="act-body">Guided factory tour at <b>Audi Automobile Factory (Audi Forum Ingolstadt)</b>.</div></div>
+        <div class="act-row"><div class="act-body">Drive 250 km southwest to <b>Stuttgart</b>.</div></div>
+        <div class="act-row"><div class="act-time">18:00 – 20:00</div><div class="act-body"><b>Dinkelacker Brewery Tour (Brauereifuhrung)</b> — Dinkelacker &amp; Schwaben Brau, Stuttgart.</div></div>
+        <div class="act-row"><div class="act-time">20:15</div><div class="act-body">Dinner at <b>Brauereigastatte</b> (brewery restaurant)</div><div><span class="tag tag-dinner">Booking ref: qw753I</span></div></div>
+      </td>
+      <td>
+        <div class="acc-name">Hampton by Hilton Stuttgart City Centre</div>
+        <div class="acc-note">Wolframstrasse 27, Stuttgart. City centre, near metro.</div>
+        <div class="acc-price"><b>€107.29</b>/single room (4 rooms)</div>
+      </td>
+    </tr>
+
+    <tr>
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">6</span></td>
+      <td><div class="d-main">29 May</div><div class="d-sub">Friday</div></td>
+      <td><div class="l-from">Stuttgart</div><div class="l-to">→ Munich Airport</div><div class="l-km">240 km</div></td>
+      <td>
+        <div class="act-row"><div class="act-time">13:45 – 15:30</div><div class="act-body">Guided factory tour at <b>Mercedes-Benz Factory Stuttgart</b>.</div></div>
+        <div class="act-row"><div class="act-body">Drive 240 km to <b>Munich Airport</b>. Check in to airport hotel.</div></div>
+      </td>
+      <td>
+        <div class="acc-name">Hampton by Hilton Munich Airport South</div>
+        <div class="acc-note">Adjacent to MUC. Pre-departure overnight.</div>
+        <div class="acc-price"><b>€75.30</b>/single room (4 rooms)</div>
+      </td>
+    </tr>
+
+    <tr class="transit">
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">7</span></td>
+      <td><div class="d-main">30 May</div><div class="d-sub">Saturday</div></td>
+      <td><div class="l-from">Munich (MUC T2)</div><div class="l-to">En route to Taiwan</div></td>
+      <td>
+        <div class="act-row"><div class="act-body">Hotel <b>shuttle bus</b> to Terminal 2 (approx. 10 km).</div></div>
+        <div class="act-row"><div class="act-time">12:00</div><div class="act-body">Arrive at <b>Munich Airport Terminal 2 (MUC T2)</b>. Check-in, baggage drop, departure procedures. Depart Germany.</div></div>
+      </td>
+      <td><div class="dash">— In-flight overnight —</div></td>
+    </tr>
+
+    <tr class="transit">
+      <td class="td-day"><span class="day-lbl">Day</span><span class="day-n">8</span></td>
+      <td><div class="d-main">31 May</div><div class="d-sub">Sunday</div></td>
+      <td><div class="l-from">Taipei (TPE)</div><div class="l-to">End of Journey</div></td>
+      <td>
+        <div class="act-row"><div class="act-time">06:35</div><div class="act-body">Arrive at <b>Taoyuan International Airport (TPE)</b>, Taiwan. End of trip.</div></div>
+      </td>
+      <td><div class="dash">— Return to Taiwan —</div></td>
+    </tr>
+
+  </tbody>
+</table>
+
+<div class="notes-box">
+  <b>Notes for Immigration Officers</b>
+  This document is a confirmed travel itinerary for a group of tourists from Taiwan visiting Germany for sightseeing and cultural activities. All accommodation is pre-booked at the listed hotels. Factory tours (BMW, Audi, Mercedes-Benz) are pre-scheduled guided visits. A brewery tour and restaurant reservation are confirmed for 28 May in Stuttgart (booking ref: qw753I). The group departs Germany on 30 May 2026 via Munich Airport (MUC T2) with return flights to Taoyuan International Airport (TPE), Taiwan.
+</div>
+
+<div class="tnotes">
+  <div class="tnotes-hdr">Important Travel Notes</div>
+  <table class="tnotes-tbl">
+    <tr valign="top">
+      <td width="16%"><span class="tn-hdr" style="color:#4a7a4a;">Weather</span>Higher rainfall in Bavaria in May, esp. mountain areas. Bring a <b>rain jacket</b>. Sunset ~21:00 in late May.</td>
+      <td width="20%"><span class="tn-hdr" style="color:#1a2a4a;">Transport</span>Bring <b>Taiwan Driver's License (original) + International Driving Permit</b>. Arrive <b>15 min early</b> for all tours — late arrivals refused, no refund.</td>
+      <td width="25%"><span class="tn-hdr" style="color:#9a7830;">Local Tips</span><b>230V, Type C/F plugs.</b> Check voltage for hair tools. Bring <b>10,000mAh+ power bank</b>. <b>Shops closed Sundays 5/24 &amp; 5/31</b> — buy essentials beforehand. VAT refunds at Ingolstadt Village &amp; airport — bring <b>passport copy</b>.</td>
+      <td width="18%"><span class="tn-hdr" style="color:#5a7a9a;">Eagle's Nest &amp; Salt Mine</span>Tunnels <b>12 degrees C / 54F</b>, humid. Overalls provided — wear <b>warm long sleeves</b> underneath. <b>No sandals</b> — closed grip shoes required.</td>
+      <td width="21%"><span class="tn-hdr" style="color:#8b2635;">Factory Tour Rules (BMW / Audi / Benz)</span><b>Footwear:</b> Fully enclosed flat shoes only — no sandals/heels/open-toe or may be denied entry. <b>Long trousers</b> recommended. <b>No photos/videos</b> on production floor — phones may be locked away.</td>
+    </tr>
+  </table>
+</div>
+
+<div class="footer">Travel Itinerary · Germany · 24 May – 31 May 2026 · Tourism · Nationality: TAIWAN</div>
+
+</div>
+</body>
+</html>
