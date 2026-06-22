@@ -18,10 +18,14 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <!-- 釘住版本號，避免 jsdelivr 抓到改成 ESM 格式的「最新版」造成 import 語法錯誤 -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1629159505/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+
+    <!-- Babel 移到最前面載入（標準建議順序），並釘住穩定版本，避免抓到「最新版」造成 script 掃描異常 -->
+    <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"></script>
     
     <style>
         :root { --bg-deep: #020617; }
@@ -81,13 +85,27 @@
             .title-area { position: relative !important; top: 0 !important; left: 0 !important; right: 0 !important; }
             .avatar-box { position: relative !important; top: 0 !important; left: 0 !important; width: 100% !important; display: flex !important; justify-content: center !important; }
         }
+
+        /* Error boundary fallback styling */
+        .app-error-fallback {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 2rem;
+            text-align: center;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
+        const { useState, useEffect, useCallback, useRef, Component } = React;
         
         // Constants
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/1GPi-84ocA56qJrzGoN6ocmt27Fmc1iHJ-qxScqsHVvE/export?format=csv";
@@ -140,6 +158,43 @@
             return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
         }
         // ----------------------------------------------
+
+        // Error Boundary - 任何子元件出錯都只顯示這個畫面，不會讓整頁變黑
+        class ErrorBoundary extends Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null };
+            }
+            static getDerivedStateFromError(error) {
+                return { hasError: true, error };
+            }
+            componentDidCatch(error, info) {
+                console.error("App crashed:", error, info);
+            }
+            handleRetry = () => {
+                this.setState({ hasError: false, error: null });
+            };
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="app-error-fallback">
+                            <div style={{fontSize: '3rem', marginBottom: '1rem'}}>⚠️</div>
+                            <h1 style={{fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem'}}>畫面發生錯誤</h1>
+                            <p style={{color: '#94a3b8', marginBottom: '1.5rem', maxWidth: '600px', wordBreak: 'break-word'}}>
+                                {this.state.error?.message || '未知錯誤'}
+                            </p>
+                            <button
+                                onClick={this.handleRetry}
+                                style={{padding: '0.75rem 2rem', background: '#3b82f6', color: 'white', borderRadius: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer'}}
+                            >
+                                重試
+                            </button>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
 
         // Bubble Background Logic
         class BubbleSystem {
@@ -212,7 +267,8 @@
             const [status, setStatus] = useState("初始化...");
             const [gesture, setGesture] = useState("等待手勢");
             const [currentShape, setCurrentShape] = useState("FIREWORKS");
-            const [isActive, setIsActive] = useState(false); 
+            const [isActive, setIsActive] = useState(false);
+            const [handFeatureAvailable, setHandFeatureAvailable] = useState(true);
 
             useEffect(() => {
                 const bubbleSys = new BubbleSystem(bubbleCanvasRef.current);
@@ -231,40 +287,46 @@
                 const particleCount = 4500;
                 const targetPositions = new Float32Array(particleCount * 3);
                 let handScale = 1.0;
+                let threeOk = true;
 
                 const initThree = () => {
-                    const container = threeContainerRef.current;
-                    scene = new THREE.Scene();
-                    scene.fog = new THREE.FogExp2(0x000000, 0.003);
-                    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                    camera.position.z = 35;
-                    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                    
-                    while(container.firstChild) container.removeChild(container.firstChild);
-                    container.appendChild(renderer.domElement);
+                    try {
+                        const container = threeContainerRef.current;
+                        scene = new THREE.Scene();
+                        scene.fog = new THREE.FogExp2(0x000000, 0.003);
+                        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                        camera.position.z = 35;
+                        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                        
+                        while(container.firstChild) container.removeChild(container.firstChild);
+                        container.appendChild(renderer.domElement);
 
-                    geometry = new THREE.BufferGeometry();
-                    const positions = new Float32Array(particleCount * 3);
-                    const colors = new Float32Array(particleCount * 3);
-                    const tempColor = new THREE.Color();
+                        geometry = new THREE.BufferGeometry();
+                        const positions = new Float32Array(particleCount * 3);
+                        const colors = new Float32Array(particleCount * 3);
+                        const tempColor = new THREE.Color();
 
-                    for (let i = 0; i < particleCount * 3; i++) {
-                        positions[i] = (Math.random() - 0.5) * 60;
-                        targetPositions[i] = positions[i];
-                        tempColor.setHSL(0.5 + Math.random() * 0.1, 0.8, 0.5);
-                        colors[i] = tempColor.r; colors[i+1] = tempColor.g; colors[i+2] = tempColor.b;
+                        for (let i = 0; i < particleCount * 3; i++) {
+                            positions[i] = (Math.random() - 0.5) * 60;
+                            targetPositions[i] = positions[i];
+                            tempColor.setHSL(0.5 + Math.random() * 0.1, 0.8, 0.5);
+                            colors[i] = tempColor.r; colors[i+1] = tempColor.g; colors[i+2] = tempColor.b;
+                        }
+                        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                        const material = new THREE.PointsMaterial({
+                            size: 0.4, vertexColors: true, blending: THREE.AdditiveBlending,
+                            depthTest: false, transparent: true, opacity: 0.8
+                        });
+                        particles = new THREE.Points(geometry, material);
+                        scene.add(particles);
+                    } catch (e) {
+                        console.error("Three.js 初始化失敗，停用粒子特效:", e);
+                        threeOk = false;
                     }
-                    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-                    const material = new THREE.PointsMaterial({
-                        size: 0.4, vertexColors: true, blending: THREE.AdditiveBlending,
-                        depthTest: false, transparent: true, opacity: 0.8
-                    });
-                    particles = new THREE.Points(geometry, material);
-                    scene.add(particles);
                 };
                 initThree();
 
@@ -310,9 +372,10 @@
                         targetPositions[i * 3] = x; targetPositions[i * 3 + 1] = y; targetPositions[i * 3 + 2] = z;
                     }
                 };
-                setTargetShape('fireworks');
+                if (threeOk) setTargetShape('fireworks');
 
                 const changeColors = () => {
+                    if (!threeOk) return;
                     const el = document.getElementById('gesture-feedback-box');
                     if (el) { el.classList.remove('color-changed'); void el.offsetWidth; el.classList.add('color-changed'); }
                     const hue = Math.random(); const isMulti = Math.random() > 0.8;
@@ -328,100 +391,129 @@
 
                 const clock = new THREE.Clock();
                 const renderParticles = () => {
+                    if (!threeOk) return;
                     particleAnimId = requestAnimationFrame(renderParticles);
-                    const time = clock.getElapsedTime();
-                    const positions = geometry.attributes.position.array;
-                    for (let i = 0; i < particleCount; i++) {
-                        const idx = i * 3;
-                        positions[idx] += (targetPositions[idx] - positions[idx]) * 0.08;
-                        positions[idx+1] += (targetPositions[idx+1] - positions[idx+1]) * 0.08;
-                        positions[idx+2] += (targetPositions[idx+2] - positions[idx+2]) * 0.08;
-                        positions[idx+1] += Math.sin(time * 2 + positions[idx]) * 0.01;
+                    try {
+                        const time = clock.getElapsedTime();
+                        const positions = geometry.attributes.position.array;
+                        for (let i = 0; i < particleCount; i++) {
+                            const idx = i * 3;
+                            positions[idx] += (targetPositions[idx] - positions[idx]) * 0.08;
+                            positions[idx+1] += (targetPositions[idx+1] - positions[idx+1]) * 0.08;
+                            positions[idx+2] += (targetPositions[idx+2] - positions[idx+2]) * 0.08;
+                            positions[idx+1] += Math.sin(time * 2 + positions[idx]) * 0.01;
+                        }
+                        geometry.attributes.position.needsUpdate = true;
+                        particles.rotation.y = time * 0.15;
+                        particles.scale.setScalar(handScale);
+                        renderer.render(scene, camera);
+                    } catch (e) {
+                        console.error("粒子渲染錯誤，停止特效:", e);
+                        threeOk = false;
+                        cancelAnimationFrame(particleAnimId);
                     }
-                    geometry.attributes.position.needsUpdate = true;
-                    particles.rotation.y = time * 0.15;
-                    particles.scale.setScalar(handScale);
-                    renderer.render(scene, camera);
                 };
-                renderParticles();
+                if (threeOk) renderParticles();
 
                 let gestureDebounce = 0;
                 let lastGesture = 'none';
                 let cameraUtils = null;
 
-                const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-                hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
-
-                hands.onResults((results) => {
-                    setStatus("偵測中...");
-                    const miniCanvas = miniHandCanvasRef.current;
-                    const miniCtx = miniCanvas.getContext('2d');
-                    miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
-
-                    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                        setIsActive(true);
-                        
-                        const landmarks = results.multiHandLandmarks[0];
-                        miniCtx.save();
-                        drawConnectors(miniCtx, landmarks, HAND_CONNECTIONS, {color: '#00ff88', lineWidth: 2});
-                        drawLandmarks(miniCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
-                        miniCtx.restore();
-
-                        const lm = landmarks;
-                        const palmSize = Math.sqrt(Math.pow(lm[0].x - lm[9].x, 2) + Math.pow(lm[0].y - lm[9].y, 2));
-                        const targetScale = 0.5 + (palmSize * 6);
-                        handScale += (targetScale - handScale) * 0.1;
-
-                        const tips = [8, 12, 16, 20]; 
-                        let openScore = 0;
-                        for(let i=0; i<4; i++) {
-                            const tipToWrist = Math.sqrt(Math.pow(lm[tips[i]].x - lm[0].x, 2) + Math.pow(lm[tips[i]].y - lm[0].y, 2));
-                            const mcpToWrist = Math.sqrt(Math.pow(lm[5 + i*4].x - lm[0].x, 2) + Math.pow(lm[5 + i*4].y - lm[0].y, 2));
-                            if (tipToWrist > mcpToWrist * 1.3) openScore++;
-                        }
-
-                        let currentGesture = 'neutral';
-                        if (openScore >= 3) currentGesture = 'open';
-                        else {
-                             let avgTipDist = 0;
-                             tips.forEach(i => { avgTipDist += Math.sqrt(Math.pow(lm[i].x - lm[0].x, 2) + Math.pow(lm[i].y - lm[0].y, 2)); });
-                             if ((avgTipDist / 4) / palmSize < 1.0) currentGesture = 'closed';
-                        }
-
-                        if(currentGesture === 'open') setGesture("張開 (Open)");
-                        else if(currentGesture === 'closed') setGesture("握拳 (Closed)");
-                        else setGesture("一般 (Neutral)");
-
-                        const now = Date.now();
-                        if (now - gestureDebounce > 500) {
-                            if (currentGesture === 'open' && lastGesture !== 'open') {
-                                setTargetShape(shapeKeys[Math.floor(Math.random() * shapeKeys.length)]);
-                                gestureDebounce = now;
-                            } else if (currentGesture === 'closed' && lastGesture !== 'closed') {
-                                changeColors();
-                                gestureDebounce = now;
-                            }
-                        }
-                        lastGesture = currentGesture;
-
-                    } else {
-                        setIsActive(false);
-                        setGesture("未偵測到手部");
-                        handScale += (1.0 - handScale) * 0.05;
+                // 手勢偵測完全包進 try/catch；任何一步失敗都只是停用此功能，不影響其他畫面
+                try {
+                    if (typeof Hands === 'undefined' || typeof Camera === 'undefined') {
+                        throw new Error('MediaPipe 套件未載入成功');
                     }
-                });
 
-                cameraUtils = new Camera(videoRef.current, {
-                    onFrame: async () => { await hands.send({image: videoRef.current}); },
-                    width: 640, height: 480, facingMode: 'user'
-                });
-                cameraUtils.start().catch(e => setStatus("無攝影機權限"));
+                    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`});
+                    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+
+                    hands.onResults((results) => {
+                        setStatus("偵測中...");
+                        const miniCanvas = miniHandCanvasRef.current;
+                        if (!miniCanvas) return;
+                        const miniCtx = miniCanvas.getContext('2d');
+                        miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+
+                        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                            setIsActive(true);
+                            
+                            const landmarks = results.multiHandLandmarks[0];
+                            miniCtx.save();
+                            drawConnectors(miniCtx, landmarks, HAND_CONNECTIONS, {color: '#00ff88', lineWidth: 2});
+                            drawLandmarks(miniCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
+                            miniCtx.restore();
+
+                            const lm = landmarks;
+                            const palmSize = Math.sqrt(Math.pow(lm[0].x - lm[9].x, 2) + Math.pow(lm[0].y - lm[9].y, 2));
+                            const targetScale = 0.5 + (palmSize * 6);
+                            handScale += (targetScale - handScale) * 0.1;
+
+                            const tips = [8, 12, 16, 20]; 
+                            let openScore = 0;
+                            for(let i=0; i<4; i++) {
+                                const tipToWrist = Math.sqrt(Math.pow(lm[tips[i]].x - lm[0].x, 2) + Math.pow(lm[tips[i]].y - lm[0].y, 2));
+                                const mcpToWrist = Math.sqrt(Math.pow(lm[5 + i*4].x - lm[0].x, 2) + Math.pow(lm[5 + i*4].y - lm[0].y, 2));
+                                if (tipToWrist > mcpToWrist * 1.3) openScore++;
+                            }
+
+                            let currentGesture = 'neutral';
+                            if (openScore >= 3) currentGesture = 'open';
+                            else {
+                                 let avgTipDist = 0;
+                                 tips.forEach(i => { avgTipDist += Math.sqrt(Math.pow(lm[i].x - lm[0].x, 2) + Math.pow(lm[i].y - lm[0].y, 2)); });
+                                 if ((avgTipDist / 4) / palmSize < 1.0) currentGesture = 'closed';
+                            }
+
+                            if(currentGesture === 'open') setGesture("張開 (Open)");
+                            else if(currentGesture === 'closed') setGesture("握拳 (Closed)");
+                            else setGesture("一般 (Neutral)");
+
+                            const now = Date.now();
+                            if (now - gestureDebounce > 500) {
+                                if (currentGesture === 'open' && lastGesture !== 'open') {
+                                    setTargetShape(shapeKeys[Math.floor(Math.random() * shapeKeys.length)]);
+                                    gestureDebounce = now;
+                                } else if (currentGesture === 'closed' && lastGesture !== 'closed') {
+                                    changeColors();
+                                    gestureDebounce = now;
+                                }
+                            }
+                            lastGesture = currentGesture;
+
+                        } else {
+                            setIsActive(false);
+                            setGesture("未偵測到手部");
+                            handScale += (1.0 - handScale) * 0.05;
+                        }
+                    });
+
+                    cameraUtils = new Camera(videoRef.current, {
+                        onFrame: async () => {
+                            try { await hands.send({image: videoRef.current}); }
+                            catch (e) { console.error("手勢分析錯誤:", e); }
+                        },
+                        width: 640, height: 480, facingMode: 'user'
+                    });
+                    cameraUtils.start().catch(e => {
+                        console.warn("無攝影機權限或啟動失敗:", e);
+                        setStatus("無攝影機權限");
+                        setHandFeatureAvailable(false);
+                    });
+                } catch (e) {
+                    console.error("手勢偵測功能初始化失敗，已停用（不影響其他畫面）:", e);
+                    setStatus("手勢功能未啟用");
+                    setHandFeatureAvailable(false);
+                }
 
                 return () => {
                     cancelAnimationFrame(bubbleAnimId);
                     cancelAnimationFrame(particleAnimId);
                     if(renderer) renderer.dispose();
                     window.removeEventListener('resize', handleResize);
+                    if (cameraUtils && cameraUtils.stop) {
+                        try { cameraUtils.stop(); } catch(e) {}
+                    }
                 };
             }, []);
 
@@ -431,22 +523,24 @@
                     <div ref={threeContainerRef} className="bg-layer z-[1]" style={{ opacity: isActive ? 1 : 0, background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)', pointerEvents: 'none' }} />
                     <video ref={videoRef} id="video-input" playsInline></video>
                     
-                    <div className="fixed top-4 right-4 z-[50] flex flex-col items-end gap-2 pointer-events-none">
-                        <div id="gesture-feedback-box" className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-lg transition-colors duration-300 w-44 pointer-events-auto">
-                            <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
-                                <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{isActive ? "HAND DETECTED" : "IDLE MODE"}</span>
-                                <div className={`w-2 h-2 rounded-full transition-colors duration-500 ${isActive ? 'bg-green-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-600'}`}></div>
-                            </div>
-                            <div className="flex justify-center bg-black/20 rounded-lg mb-2 overflow-hidden h-24 relative border border-white/5">
-                                <canvas ref={miniHandCanvasRef} width="160" height="120" className="w-full h-full object-contain" />
-                                {!isActive && <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-600">等待手勢...</div>}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div><div className="text-slate-500 scale-75 origin-top-left">GESTURE</div><div className="font-mono font-bold text-cyan-400 truncate">{gesture}</div></div>
-                                <div><div className="text-slate-500 scale-75 origin-top-left">SHAPE</div><div className="font-mono font-bold text-pink-400 truncate">{currentShape}</div></div>
+                    {handFeatureAvailable && (
+                        <div className="fixed top-4 right-4 z-[50] flex flex-col items-end gap-2 pointer-events-none">
+                            <div id="gesture-feedback-box" className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-lg transition-colors duration-300 w-44 pointer-events-auto">
+                                <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
+                                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{isActive ? "HAND DETECTED" : "IDLE MODE"}</span>
+                                    <div className={`w-2 h-2 rounded-full transition-colors duration-500 ${isActive ? 'bg-green-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-600'}`}></div>
+                                </div>
+                                <div className="flex justify-center bg-black/20 rounded-lg mb-2 overflow-hidden h-24 relative border border-white/5">
+                                    <canvas ref={miniHandCanvasRef} width="160" height="120" className="w-full h-full object-contain" />
+                                    {!isActive && <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-600">等待手勢...</div>}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div><div className="text-slate-500 scale-75 origin-top-left">GESTURE</div><div className="font-mono font-bold text-cyan-400 truncate">{gesture}</div></div>
+                                    <div><div className="text-slate-500 scale-75 origin-top-left">SHAPE</div><div className="font-mono font-bold text-pink-400 truncate">{currentShape}</div></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </>
             );
         }
@@ -1564,7 +1658,9 @@
             <div className="min-h-screen bg-slate-950 text-white relative font-sans">
               
               {/* === 新整合的 混合型背景（Bubble + Three.js + MiniMap） === */}
-              <UnifiedBackground />
+              <ErrorBoundary>
+                <UnifiedBackground />
+              </ErrorBoundary>
               
               {isSyncing && (
                 <div className="fixed top-4 right-4 z-[100] bg-blue-600/80 backdrop-blur px-3 md:px-4 py-2 rounded-full text-[10px] md:text-xs font-bold animate-pulse flex items-center gap-2">
@@ -1728,11 +1824,13 @@
           );
         }
 
-        // Render the app
+        // Render the app, wrapped in an error boundary so any crash shows a message instead of a black screen
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
+        );
     </script>
-    
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </body>
 </html>
