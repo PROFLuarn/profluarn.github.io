@@ -3,32 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欒老師 Dr. Luarn - 教室資訊看板</title>
+    <title>欒老師 Dr. Luarn - 智慧互動資訊看板</title>
+    
+    <link rel="icon" href="https://profluarn.github.io/pic/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="https://profluarn.github.io/pic/favicon.ico" type="image/x-icon">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&family=JetBrains+Mono:wght@700&family=Noto+Sans+TC:wght@300;500;900&display=swap" rel="stylesheet">
     
-    <!-- React and ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- XLSX library -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+ 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 釘住版本號，避免 jsdelivr 抓到改成 ESM 格式的「最新版」造成 import 語法錯誤 -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6.1629159505/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
     
     <style>
         :root { --bg-deep: #020617; }
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            background-color: #000000;
             color: white;
             margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw;
         }
-        .depth-3d {
-            transform: perspective(1000px) rotateX(2deg);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.05);
+        
+        .bg-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transition: opacity 0.8s ease-in-out;
         }
+        
+        .glass-texture {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
+            backdrop-filter: blur(20px);
+        }
+        
         .btn-3d {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 8px 0 rgba(0,0,0,0.2), 0 15px 20px rgba(0,0,0,0.3);
@@ -37,79 +52,49 @@
             transform: translateY(4px);
             box-shadow: 0 4px 0 rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
         }
-        .glass-texture {
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
-            backdrop-filter: blur(20px);
+ 
+        @keyframes flash-feedback {
+            0% { background-color: rgba(255,255,255,0.1); }
+            50% { background-color: rgba(255, 0, 100, 0.5); }
+            100% { background-color: rgba(255,255,255,0.1); }
         }
+        .color-changed { animation: flash-feedback 0.3s ease-out; }
+ 
         @keyframes pastel-shift {
-            0%, 100% { color: #ffffff; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
-            20% { color: #ffd1dc; text-shadow: 0 0 35px rgba(255,209,220,0.5); }
-            40% { color: #b3e5fc; text-shadow: 0 0 35px rgba(179,229,252,0.5); }
-            60% { color: #c8e6c9; text-shadow: 0 0 35px rgba(200,230,201,0.5); }
-            80% { color: #fff9c4; text-shadow: 0 0 35px rgba(255,249,196,0.5); }
-        }
-        .text-pastel-cycle { animation: pastel-shift 24s ease-in-out infinite; }
-        
-        /* 平板尺寸 (768px - 1024px) */
-        @media (max-width: 1024px) {
-            .title-area { 
-                top: 0.5rem !important; 
-                transform: scale(0.7) !important; 
-            }
-            .avatar-box { 
-                width: 5rem !important; 
-                height: 5rem !important; 
-                top: 0.5rem !important; 
-                left: 0.5rem !important; 
-            }
+            0%, 100% { color: #ffffff !important; text-shadow: 0 0 30px rgba(255,255,255,0.6); }
+            16% { color: #ff1493 !important; text-shadow: 0 0 40px rgba(255,20,147,0.9); }
+            33% { color: #ffd700 !important; text-shadow: 0 0 40px rgba(255,215,0,0.9); }
+            50% { color: #00bfff !important; text-shadow: 0 0 40px rgba(0,191,255,0.9); }
+            66% { color: #00ff7f !important; text-shadow: 0 0 40px rgba(0,255,127,0.9); }
+            83% { color: #ff6347 !important; text-shadow: 0 0 40px rgba(255,99,71,0.9); }
         }
         
-        /* 手機尺寸 (最大 768px) */
+        /* Custom Scrollbar for Right Schedule */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.4); }
+ 
+        canvas { display: block !important; }
+        #video-input { display: none; }
+        
         @media (max-width: 768px) {
-            body {
-                overflow-y: auto;
-                overflow-x: hidden;
-                height: auto;
-                min-height: 100vh;
-            }
-            
-            .title-area { 
-                position: relative !important;
-                top: 0 !important;
-                transform: scale(1) !important;
-                padding: 1rem 0.5rem !important;
-            }
-            
-            .avatar-box { 
-                position: relative !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: auto !important;
-                display: flex !important;
-                justify-content: center !important;
-                margin-bottom: 1rem !important;
-            }
-            
-            /* 隱藏背景動畫以提升手機效能 */
-            canvas {
-                display: none !important;
-            }
-            
-            /* 簡化背景 */
-            body {
-                background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
-            }
+            .title-area { position: relative !important; top: 0 !important; left: 0 !important; right: 0 !important; }
+            .avatar-box { position: relative !important; top: 0 !important; left: 0 !important; width: 100% !important; display: flex !important; justify-content: center !important; }
         }
-        
-        /* 小手機尺寸 (最大 480px) */
-        @media (max-width: 480px) {
-            .title-area span:first-child {
-                font-size: 2.5rem !important;
-            }
-            .title-area span:nth-child(2) {
-                font-size: 1.25rem !important;
-            }
+ 
+        /* Error boundary fallback styling */
+        .app-error-fallback {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 2rem;
+            text-align: center;
+            font-family: 'Noto Sans TC', sans-serif;
         }
     </style>
 </head>
@@ -117,11 +102,12 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useRef } = React;
+        const { useState, useEffect, useCallback, useRef, Component } = React;
         
         // Constants
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/1GPi-84ocA56qJrzGoN6ocmt27Fmc1iHJ-qxScqsHVvE/export?format=csv";
         const N8N_WEBHOOK_URL = "https://a3g.app.n8n.cloud/webhook/sch_wh";
+        const N8N_PHOTO_WEBHOOK_URL = "https://a3g.app.n8n.cloud/webhook/drivePIC";
         const DAYS_ZH = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
         
         const DEFAULT_SLOTS = [
@@ -139,225 +125,737 @@
           { id: '12', name: '第B節', start: '19:20', end: '20:10' },
           { id: '13', name: '第C節', start: '20:15', end: '21:05' },
         ];
-
+ 
         const DEFAULT_TEMPLATES = [
           { id: '1', btnName: '下課休息', title: '下課時間', subtitle: '離開教室請注意安全' },
           { id: '2', btnName: '安靜午休', title: '午休時間', subtitle: '請保持安靜，安靜午睡' },
           { id: '3', btnName: '打掃時間', title: '環境清掃', subtitle: '維護校園整潔，大家動起來' },
         ];
-
-        // BubbleBackground Component
-        function BubbleBackground() {
-          const canvasRef = useRef(null);
-
-          useEffect(() => {
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            let bubbles = [];
-            let animationFrameId;
-
-            const resize = () => {
-              canvas.width = window.innerWidth;
-              canvas.height = window.innerHeight;
-            };
-
-            const colors = [
-              '79, 70, 229',   // Indigo
-              '124, 58, 237',  // Violet
-              '37, 99, 235',   // Blue
-              '219, 39, 119',  // Pink
-              '5, 150, 105',   // Emerald
-              '245, 158, 11',  // Amber/Gold
-              '239, 68, 68',   // Red
+ 
+        // --- Helper Functions for Google Drive Images ---
+        function extractFileId(url) {
+            if (!url) return null;
+            const patterns = [
+                /\/file\/d\/([a-zA-Z0-9_-]+)/,     // /file/d/FILE_ID/view
+                /\/d\/([a-zA-Z0-9_-]+)/,           // /d/FILE_ID
+                /id=([a-zA-Z0-9_-]+)/,             // ?id=FILE_ID
+                /\/open\?id=([a-zA-Z0-9_-]+)/      // /open?id=FILE_ID
             ];
-
-            class Bubble {
-              constructor() {
-                this.rgb = colors[Math.floor(Math.random() * colors.length)];
-                this.x = 0;
-                this.y = 0;
-                this.radius = 0;
-                this.speedX = 0;
-                this.speedY = 0;
-                this.opacity = 0;
+            for (let pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            return null;
+        }
+ 
+        function buildThumbnailUrl(fileId, size = 500) {
+            if (!fileId) return null;
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
+        }
+        // ----------------------------------------------
+ 
+        // Error Boundary - 任何子元件出錯都只顯示這個畫面，不會讓整頁變黑
+        class ErrorBoundary extends Component {
+            constructor(props) {
+                super(props);
+                this.state = { hasError: false, error: null };
+            }
+            static getDerivedStateFromError(error) {
+                return { hasError: true, error };
+            }
+            componentDidCatch(error, info) {
+                console.error("App crashed:", error, info);
+            }
+            handleRetry = () => {
+                this.setState({ hasError: false, error: null });
+            };
+            render() {
+                if (this.state.hasError) {
+                    return (
+                        <div className="app-error-fallback">
+                            <div style={{fontSize: '3rem', marginBottom: '1rem'}}>⚠️</div>
+                            <h1 style={{fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.5rem'}}>畫面發生錯誤</h1>
+                            <p style={{color: '#94a3b8', marginBottom: '1.5rem', maxWidth: '600px', wordBreak: 'break-word'}}>
+                                {this.state.error?.message || '未知錯誤'}
+                            </p>
+                            <button
+                                onClick={this.handleRetry}
+                                style={{padding: '0.75rem 2rem', background: '#3b82f6', color: 'white', borderRadius: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer'}}
+                            >
+                                重試
+                            </button>
+                        </div>
+                    );
+                }
+                return this.props.children;
+            }
+        }
+ 
+        // Bubble Background Logic
+        class BubbleSystem {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.bubbles = [];
+                this.resize();
+                this.init();
+            }
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            init() {
+                this.bubbles = [];
+                const count = Math.floor((window.innerWidth * window.innerHeight) / 40000); 
+                for (let i = 0; i < Math.max(count, 18); i++) this.bubbles.push(new Bubble(this.canvas));
+            }
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.bubbles.forEach(b => { b.update(); b.draw(this.ctx); });
+            }
+        }
+ 
+        class Bubble {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.colors = ['79, 70, 229', '124, 58, 237', '37, 99, 235', '219, 39, 119', '5, 150, 105', '245, 158, 11', '239, 68, 68'];
                 this.reset(true);
-              }
-
-              reset(initial = false) {
-                if (!canvas) return;
-                this.x = Math.random() * canvas.width;
-                this.y = initial ? Math.random() * canvas.height : canvas.height + 200;
-                
+            }
+            reset(initial = false) {
+                this.x = Math.random() * this.canvas.width;
+                this.y = initial ? Math.random() * this.canvas.height : this.canvas.height + 200;
                 this.radius = Math.random() * 250 + 150; 
                 this.speedX = Math.random() * 0.6 - 0.3;
                 this.speedY = -(Math.random() * 0.5 + 0.3); 
-                
-                this.opacity = Math.random() * 0.2 + 0.25; 
-                this.rgb = colors[Math.floor(Math.random() * colors.length)];
-              }
-
-              update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-
-                if (this.y < -this.radius) {
-                  this.reset();
-                }
-              }
-
-              draw() {
-                if (!ctx) return;
+                this.opacity = Math.random() * 0.3 + 0.4; 
+                this.rgb = this.colors[Math.floor(Math.random() * this.colors.length)];
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.y < -this.radius) this.reset();
+            }
+            draw(ctx) {
                 ctx.save();
-                
                 ctx.beginPath();
-                const gradient = ctx.createRadialGradient(
-                  this.x, this.y, 0, 
-                  this.x, this.y, this.radius
-                );
-                
-                gradient.addColorStop(0, `rgba(${this.rgb}, ${this.opacity})`);
-                gradient.addColorStop(0.5, `rgba(${this.rgb}, ${this.opacity * 0.4})`);
-                gradient.addColorStop(1, `rgba(${this.rgb}, 0)`);
-                
-                ctx.fillStyle = gradient;
+                const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                g.addColorStop(0, `rgba(${this.rgb}, ${this.opacity})`);
+                g.addColorStop(0.5, `rgba(${this.rgb}, ${this.opacity * 0.4})`);
+                g.addColorStop(1, `rgba(${this.rgb}, 0)`);
+                ctx.fillStyle = g;
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.fill();
-                
                 ctx.beginPath();
                 ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.08, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.3})`;
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.5})`; 
                 ctx.fill();
-                
                 ctx.restore();
-              }
             }
-
-            const init = () => {
-              bubbles = [];
-              const count = Math.floor((window.innerWidth * window.innerHeight) / 40000); 
-              for (let i = 0; i < Math.max(count, 18); i++) {
-                bubbles.push(new Bubble());
-              }
-            };
-
-            const animate = () => {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-              bubbles.forEach(bubble => {
-                bubble.update();
-                bubble.draw();
-              });
-              animationFrameId = requestAnimationFrame(animate);
-            };
-
-            const handleResize = () => {
-              resize();
-              init();
-            };
-
-            window.addEventListener('resize', handleResize);
-            
-            resize();
-            init();
-            animate();
-
-            return () => {
-              window.removeEventListener('resize', handleResize);
-              cancelAnimationFrame(animationFrameId);
-            };
-          }, []);
-
-          return <canvas ref={canvasRef} className="fixed inset-0 z-[1] pointer-events-none opacity-80" />;
         }
-
+ 
+        // Unified Interactive Background Component
+        function UnifiedBackground() {
+            const bubbleCanvasRef = useRef(null);
+            const threeContainerRef = useRef(null);
+            const miniHandCanvasRef = useRef(null);
+            const videoRef = useRef(null);
+            
+            const [status, setStatus] = useState("初始化...");
+            const [gesture, setGesture] = useState("等待手勢");
+            const [currentShape, setCurrentShape] = useState("FIREWORKS");
+            const [isActive, setIsActive] = useState(false);
+            const [handFeatureAvailable, setHandFeatureAvailable] = useState(true);
+ 
+            useEffect(() => {
+                const bubbleSys = new BubbleSystem(bubbleCanvasRef.current);
+                let bubbleAnimId;
+                const renderBubbles = () => {
+                    bubbleSys.animate();
+                    bubbleAnimId = requestAnimationFrame(renderBubbles);
+                };
+                renderBubbles();
+                
+                const handleResize = () => bubbleSys.resize();
+                window.addEventListener('resize', handleResize);
+ 
+                let renderer, scene, camera, particles, geometry;
+                let particleAnimId;
+                const particleCount = 4500;
+                const targetPositions = new Float32Array(particleCount * 3);
+                let handScale = 1.0;
+                let threeOk = true;
+ 
+                const initThree = () => {
+                    try {
+                        const container = threeContainerRef.current;
+                        scene = new THREE.Scene();
+                        scene.fog = new THREE.FogExp2(0x000000, 0.003);
+                        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                        camera.position.z = 35;
+                        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                        
+                        while(container.firstChild) container.removeChild(container.firstChild);
+                        container.appendChild(renderer.domElement);
+ 
+                        geometry = new THREE.BufferGeometry();
+                        const positions = new Float32Array(particleCount * 3);
+                        const colors = new Float32Array(particleCount * 3);
+                        const tempColor = new THREE.Color();
+ 
+                        for (let i = 0; i < particleCount * 3; i++) {
+                            positions[i] = (Math.random() - 0.5) * 60;
+                            targetPositions[i] = positions[i];
+                            tempColor.setHSL(0.5 + Math.random() * 0.1, 0.8, 0.5);
+                            colors[i] = tempColor.r; colors[i+1] = tempColor.g; colors[i+2] = tempColor.b;
+                        }
+                        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+ 
+                        const material = new THREE.PointsMaterial({
+                            size: 0.4, vertexColors: true, blending: THREE.AdditiveBlending,
+                            depthTest: false, transparent: true, opacity: 0.8
+                        });
+                        particles = new THREE.Points(geometry, material);
+                        scene.add(particles);
+                    } catch (e) {
+                        console.error("Three.js 初始化失敗，停用粒子特效:", e);
+                        threeOk = false;
+                    }
+                };
+                initThree();
+ 
+                const shapes = {
+                    heart: (i) => {
+                        const t = Math.random() * Math.PI * 2;
+                        const x = 16 * Math.pow(Math.sin(t), 3);
+                        const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+                        const z = (Math.random() - 0.5) * 6;
+                        return [x * 0.6, y * 0.6, z];
+                    },
+                    flower: (i) => {
+                        const spread = 0.6; const angle = 137.5 * (Math.PI / 180) * i; const r = spread * Math.sqrt(i);
+                        return [r * Math.cos(angle), r * Math.sin(angle), Math.sin(r * 0.4) * 8];
+                    },
+                    saturn: (i) => {
+                        const isRing = Math.random() > 0.5;
+                        if (isRing) {
+                            const angle = Math.random() * Math.PI * 2; const r = 14 + Math.random() * 6;
+                            return [r * Math.cos(angle), r * Math.sin(angle) * 0.15, r * Math.sin(angle) * 0.8];
+                        } else {
+                            const r = 9; const theta = Math.random() * Math.PI * 2; const phi = Math.acos(2 * Math.random() - 1);
+                            return [r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi)];
+                        }
+                    },
+                    buddha: (i) => {
+                        const u = Math.random() * Math.PI * 2; const v = Math.random() * Math.PI * 2;
+                        const r = 8 + Math.cos(3 * v) * 2;
+                        return [r * Math.cos(2 * u), r * Math.sin(2 * u), Math.sin(3 * v) * 5 + (Math.random()-0.5)*2];
+                    },
+                    fireworks: (i) => {
+                        const r = Math.random() * 25; const theta = Math.random() * Math.PI * 2; const phi = Math.acos(2 * Math.random() - 1);
+                        return [r * Math.sin(phi) * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta), r * Math.cos(phi)];
+                    }
+                };
+                const shapeKeys = Object.keys(shapes);
+ 
+                const setTargetShape = (shapeName) => {
+                    setCurrentShape(shapeName.toUpperCase());
+                    const generator = shapes[shapeName];
+                    for (let i = 0; i < particleCount; i++) {
+                        const [x, y, z] = generator(i);
+                        targetPositions[i * 3] = x; targetPositions[i * 3 + 1] = y; targetPositions[i * 3 + 2] = z;
+                    }
+                };
+                if (threeOk) setTargetShape('fireworks');
+ 
+                const changeColors = () => {
+                    if (!threeOk) return;
+                    const el = document.getElementById('gesture-feedback-box');
+                    if (el) { el.classList.remove('color-changed'); void el.offsetWidth; el.classList.add('color-changed'); }
+                    const hue = Math.random(); const isMulti = Math.random() > 0.8;
+                    const c = new THREE.Color();
+                    const attr = geometry.attributes.color;
+                    for (let i = 0; i < particleCount; i++) {
+                        if (isMulti) c.setHSL(Math.random(), 1.0, 0.6);
+                        else c.setHSL(hue + (Math.random()-0.5)*0.1, 0.9, 0.5 + Math.random()*0.3);
+                        attr.setXYZ(i, c.r, c.g, c.b);
+                    }
+                    attr.needsUpdate = true;
+                };
+ 
+                const clock = new THREE.Clock();
+                const renderParticles = () => {
+                    if (!threeOk) return;
+                    particleAnimId = requestAnimationFrame(renderParticles);
+                    try {
+                        const time = clock.getElapsedTime();
+                        const positions = geometry.attributes.position.array;
+                        for (let i = 0; i < particleCount; i++) {
+                            const idx = i * 3;
+                            positions[idx] += (targetPositions[idx] - positions[idx]) * 0.08;
+                            positions[idx+1] += (targetPositions[idx+1] - positions[idx+1]) * 0.08;
+                            positions[idx+2] += (targetPositions[idx+2] - positions[idx+2]) * 0.08;
+                            positions[idx+1] += Math.sin(time * 2 + positions[idx]) * 0.01;
+                        }
+                        geometry.attributes.position.needsUpdate = true;
+                        particles.rotation.y = time * 0.15;
+                        particles.scale.setScalar(handScale);
+                        renderer.render(scene, camera);
+                    } catch (e) {
+                        console.error("粒子渲染錯誤，停止特效:", e);
+                        threeOk = false;
+                        cancelAnimationFrame(particleAnimId);
+                    }
+                };
+                if (threeOk) renderParticles();
+ 
+                let gestureDebounce = 0;
+                let lastGesture = 'none';
+                let cameraUtils = null;
+ 
+                // 手勢偵測完全包進 try/catch；任何一步失敗都只是停用此功能，不影響其他畫面
+                try {
+                    if (typeof Hands === 'undefined' || typeof Camera === 'undefined') {
+                        throw new Error('MediaPipe 套件未載入成功');
+                    }
+ 
+                    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`});
+                    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+ 
+                    hands.onResults((results) => {
+                        setStatus("偵測中...");
+                        const miniCanvas = miniHandCanvasRef.current;
+                        if (!miniCanvas) return;
+                        const miniCtx = miniCanvas.getContext('2d');
+                        miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+ 
+                        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                            setIsActive(true);
+                            
+                            const landmarks = results.multiHandLandmarks[0];
+                            miniCtx.save();
+                            drawConnectors(miniCtx, landmarks, HAND_CONNECTIONS, {color: '#00ff88', lineWidth: 2});
+                            drawLandmarks(miniCtx, landmarks, {color: '#FF0000', lineWidth: 1, radius: 2});
+                            miniCtx.restore();
+ 
+                            const lm = landmarks;
+                            const palmSize = Math.sqrt(Math.pow(lm[0].x - lm[9].x, 2) + Math.pow(lm[0].y - lm[9].y, 2));
+                            const targetScale = 0.5 + (palmSize * 6);
+                            handScale += (targetScale - handScale) * 0.1;
+ 
+                            const tips = [8, 12, 16, 20]; 
+                            let openScore = 0;
+                            for(let i=0; i<4; i++) {
+                                const tipToWrist = Math.sqrt(Math.pow(lm[tips[i]].x - lm[0].x, 2) + Math.pow(lm[tips[i]].y - lm[0].y, 2));
+                                const mcpToWrist = Math.sqrt(Math.pow(lm[5 + i*4].x - lm[0].x, 2) + Math.pow(lm[5 + i*4].y - lm[0].y, 2));
+                                if (tipToWrist > mcpToWrist * 1.3) openScore++;
+                            }
+ 
+                            let currentGesture = 'neutral';
+                            if (openScore >= 3) currentGesture = 'open';
+                            else {
+                                 let avgTipDist = 0;
+                                 tips.forEach(i => { avgTipDist += Math.sqrt(Math.pow(lm[i].x - lm[0].x, 2) + Math.pow(lm[i].y - lm[0].y, 2)); });
+                                 if ((avgTipDist / 4) / palmSize < 1.0) currentGesture = 'closed';
+                            }
+ 
+                            if(currentGesture === 'open') setGesture("張開 (Open)");
+                            else if(currentGesture === 'closed') setGesture("握拳 (Closed)");
+                            else setGesture("一般 (Neutral)");
+ 
+                            const now = Date.now();
+                            if (now - gestureDebounce > 500) {
+                                if (currentGesture === 'open' && lastGesture !== 'open') {
+                                    setTargetShape(shapeKeys[Math.floor(Math.random() * shapeKeys.length)]);
+                                    gestureDebounce = now;
+                                } else if (currentGesture === 'closed' && lastGesture !== 'closed') {
+                                    changeColors();
+                                    gestureDebounce = now;
+                                }
+                            }
+                            lastGesture = currentGesture;
+ 
+                        } else {
+                            setIsActive(false);
+                            setGesture("未偵測到手部");
+                            handScale += (1.0 - handScale) * 0.05;
+                        }
+                    });
+ 
+                    cameraUtils = new Camera(videoRef.current, {
+                        onFrame: async () => {
+                            try { await hands.send({image: videoRef.current}); }
+                            catch (e) { console.error("手勢分析錯誤:", e); }
+                        },
+                        width: 640, height: 480, facingMode: 'user'
+                    });
+                    cameraUtils.start().catch(e => {
+                        console.warn("無攝影機權限或啟動失敗:", e);
+                        setStatus("無攝影機權限");
+                        setHandFeatureAvailable(false);
+                    });
+                } catch (e) {
+                    console.error("手勢偵測功能初始化失敗，已停用（不影響其他畫面）:", e);
+                    setStatus("手勢功能未啟用");
+                    setHandFeatureAvailable(false);
+                }
+ 
+                return () => {
+                    cancelAnimationFrame(bubbleAnimId);
+                    cancelAnimationFrame(particleAnimId);
+                    if(renderer) renderer.dispose();
+                    window.removeEventListener('resize', handleResize);
+                    if (cameraUtils && cameraUtils.stop) {
+                        try { cameraUtils.stop(); } catch(e) {}
+                    }
+                };
+            }, []);
+ 
+            return (
+                <>
+                    <canvas ref={bubbleCanvasRef} className="bg-layer z-0" style={{ opacity: isActive ? 0 : 1 }} />
+                    <div ref={threeContainerRef} className="bg-layer z-[1]" style={{ opacity: isActive ? 1 : 0, background: 'radial-gradient(circle at center, #1a1a2e 0%, #000000 100%)', pointerEvents: 'none' }} />
+                    <video ref={videoRef} id="video-input" playsInline></video>
+                    
+                    {handFeatureAvailable && (
+                        <div className="fixed top-4 right-4 z-[50] flex flex-col items-end gap-2 pointer-events-none">
+                            <div id="gesture-feedback-box" className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-3 shadow-lg transition-colors duration-300 w-44 pointer-events-auto">
+                                <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
+                                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{isActive ? "HAND DETECTED" : "IDLE MODE"}</span>
+                                    <div className={`w-2 h-2 rounded-full transition-colors duration-500 ${isActive ? 'bg-green-400 shadow-[0_0_8px_#4ade80]' : 'bg-slate-600'}`}></div>
+                                </div>
+                                <div className="flex justify-center bg-black/20 rounded-lg mb-2 overflow-hidden h-24 relative border border-white/5">
+                                    <canvas ref={miniHandCanvasRef} width="160" height="120" className="w-full h-full object-contain" />
+                                    {!isActive && <div className="absolute inset-0 flex items-center justify-center text-[10px] text-slate-600">等待手勢...</div>}
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div><div className="text-slate-500 scale-75 origin-top-left">GESTURE</div><div className="font-mono font-bold text-cyan-400 truncate">{gesture}</div></div>
+                                    <div><div className="text-slate-500 scale-75 origin-top-left">SHAPE</div><div className="font-mono font-bold text-pink-400 truncate">{currentShape}</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+ 
+        // TodaySchedule Component
+        function TodaySchedule({ slots, timetable, now }) {
+          const today = now.getDay();
+          // const todayName = DAYS_ZH[today]; // 已移除
+ 
+          const currentHour = now.getHours().toString().padStart(2, '0');
+          const currentMinute = now.getMinutes().toString().padStart(2, '0');
+          const currentTime = `${currentHour}:${currentMinute}`;
+ 
+          return (
+            <div className="hidden lg:block fixed left-4 top-[58%] -translate-y-1/2 z-30 w-48">
+              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl max-h-[85vh] overflow-y-auto">
+                <div className="text-center mb-2 sticky top-0 bg-black/60 backdrop-blur-md py-1.5 rounded-lg -mx-3 px-3">
+                  <h3 style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-sm font-black mb-0">
+                    今日課表
+                  </h3>
+                </div>
+                
+                <div className="space-y-1.5">
+                  {slots.map(slot => {
+                    const subject = timetable[today]?.[slot.id] || '（空堂）';
+                    const isNow = currentTime >= slot.start && currentTime < slot.end;
+                    const isPast = currentTime >= slot.end;
+                    
+                    return (
+                      <div 
+                        key={slot.id}
+                        className={`p-2 rounded-lg border transition-all duration-300 ${
+                          isNow ? 'bg-gradient-to-r from-pink-500/30 to-purple-500/30 border-pink-400 scale-105 shadow-lg shadow-pink-500/30' : 
+                          isPast ? 'bg-white/5 border-white/10 opacity-40' : 'bg-white/10 border-white/20'
+                        }`}
+                      >
+                        {/* 第一行：節次與時間 */}
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-baseline gap-1">
+                              <span className={`font-bold text-xs ${isNow ? 'text-pink-300' : 'text-slate-400'}`}>{slot.name}</span>
+                              <span className={`text-[10px] font-mono ${isNow ? 'text-pink-200' : 'text-slate-500'}`}>{slot.start}-{slot.end}</span>
+                          </div>
+                        </div>
+                        
+                        {/* 第二行：課程名稱與進行中標籤 */}
+                        <div className="flex justify-between items-center min-h-[1.25rem]">
+                            <div style={{animation: isNow ? 'pastel-shift 12s ease-in-out infinite' : 'none', color: '#ffffff'}} className={`text-sm font-black flex-1 leading-tight`}>
+                              {subject}
+                            </div>
+                            {isNow && (
+                                <span className="ml-2 px-2 py-0.5 bg-pink-500 text-white text-[9px] font-black rounded-full animate-pulse whitespace-nowrap shadow-lg shadow-pink-500/50">
+                                  進行中
+                                </span>
+                            )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        }
+ 
+        // RightSchedule Component (Updated with High Contrast Colors)
+        function RightSchedule({ events, onRefresh, isRefreshing }) {
+          const getFormattedDate = (offset = 0) => {
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+          };
+ 
+          const todayStr = getFormattedDate(0);
+          const tomorrowStr = getFormattedDate(1);
+          const dayAfterStr = getFormattedDate(2);
+ 
+          const parseAllEvents = (rawText) => {
+            if (!rawText) return [];
+            const regex = /(\d{1,2}[/-]\d{1,2})\s+(\d{1,2}[:：]\d{2})\s+(.*?)(?=\s*\d{1,2}[/-]\d{1,2}\s+\d{1,2}[:：]\d{2}|$)/gs;
+            const matches = [...rawText.matchAll(regex)];
+            
+            return matches.map(match => {
+                let datePart = match[1].replace('-', '/');
+                const [m, d] = datePart.split('/');
+                const formattedDate = `${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+                
+                return {
+                    isParsed: true,
+                    date: formattedDate,
+                    time: match[2].replace('：', ':'),
+                    content: match[3].trim().replace(/[*#]/g, '')
+                };
+            });
+          };
+ 
+          let parsedEvents = [];
+          if (events && events.includes('\n')) {
+             parsedEvents = events.split('\n').filter(l => l.trim()).map(line => {
+                 const match = line.match(/(\d{1,2}[/-]\d{1,2})\s+(\d{1,2}:\d{2})\s+(.*)/);
+                 if(match) {
+                     let datePart = match[1].replace('-', '/');
+                     const [m, d] = datePart.split('/');
+                     return { isParsed: true, date: `${m.padStart(2,'0')}/${d.padStart(2,'0')}`, time: match[2], content: match[3].replace(/[*#]/g, '') };
+                 }
+                 return { isParsed: false, text: line };
+             });
+          } else {
+             parsedEvents = parseAllEvents(events || "");
+          }
+          
+          if (parsedEvents.length === 0 && events && events.trim().length > 0 && events !== '本日尚無重要行事。') {
+              parsedEvents = [{ isParsed: false, text: events }];
+          }
+ 
+          const grouped = {
+            today: parsedEvents.filter(e => e.isParsed && e.date === todayStr),
+            tomorrow: parsedEvents.filter(e => e.isParsed && e.date === tomorrowStr),
+            dayAfter: parsedEvents.filter(e => e.isParsed && e.date === dayAfterStr),
+            others: parsedEvents.filter(e => !e.isParsed || (e.date !== todayStr && e.date !== tomorrowStr && e.date !== dayAfterStr))
+          };
+ 
+          // Updated renderSection with distinct color themes
+          const renderSection = (title, items, icon, colorTheme) => (
+            <div className="mb-3 last:mb-0">
+                <div className="flex items-center gap-2 mb-1.5 px-1">
+                    <i className={`fas ${icon} text-[10px] text-slate-400`}></i>
+                    <span className="text-[10px] font-bold text-slate-300 tracking-wider uppercase">{title}</span>
+                </div>
+                {items.length > 0 ? (
+                    <div className="space-y-1.5">
+                        {items.map((item, idx) => (
+                            <div key={idx} className={`p-2.5 rounded-lg border flex flex-col gap-0.5 transition-all ${colorTheme} hover:bg-opacity-30`}>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-mono opacity-80 bg-black/20 px-1.5 py-0.5 rounded border border-white/10">{item.time}</span>
+                                </div>
+                                <div style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-xs font-bold leading-tight mt-1">
+                                    {item.content}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className={`p-2 text-center border rounded-lg border-dashed bg-transparent ${colorTheme.replace('bg-', 'border-').split(' ')[0].replace('/25','/20')}`}>
+                        <span className="text-[10px] text-slate-600">無行程</span>
+                    </div>
+                )}
+            </div>
+          );
+ 
+          return (
+            <div className="hidden lg:block fixed right-4 top-[58%] -translate-y-1/2 z-30 w-64">
+              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl max-h-[85vh] overflow-y-auto flex flex-col h-full custom-scrollbar">
+                <div className="text-center mb-3 sticky top-0 bg-black/60 backdrop-blur-md py-1.5 rounded-lg -mx-3 px-3 flex items-center justify-between z-10">
+                   <div className="flex-1"></div>
+                   <div className="text-center flex-1">
+                      <h3 style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-base font-black mb-0.5 whitespace-nowrap">
+                        行事曆
+                      </h3>
+                      <p className="text-[10px] text-slate-400">未來三日</p>
+                   </div>
+                   <div className="flex-1 flex justify-end">
+                      <button 
+                        onClick={onRefresh} 
+                        disabled={isRefreshing}
+                        className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 transition-colors"
+                        title="重新整理行事曆"
+                      >
+                         <i className={`fas fa-sync-alt text-[10px] ${isRefreshing ? 'fa-spin text-amber-400' : ''}`}></i>
+                      </button>
+                   </div>
+                </div>
+                
+                {isRefreshing ? (
+                    <div className="flex-1 flex items-center justify-center min-h-[200px]">
+                        <div className="text-center text-slate-400 text-xs animate-pulse">
+                           <i className="fas fa-circle-notch fa-spin mb-2 text-xl"></i><br/>
+                           正在同步...
+                        </div>
+                    </div>
+                ) : (
+                    <div className="pb-2">
+                        {/* 今天 - 艷粉 (Pink) - High Urgency */}
+                        {renderSection(`今天 (${todayStr})`, grouped.today, "fa-calendar-day", "bg-pink-600/25 border-pink-500/50 text-pink-100")}
+                        
+                        {/* 明天 - 天藍 (Sky Blue) - Cool Contrast */}
+                        {renderSection(`明天 (${tomorrowStr})`, grouped.tomorrow, "fa-sun", "bg-sky-600/25 border-sky-500/50 text-sky-100")}
+                        
+                        {/* 後天 - 萊姆綠 (Lime Green) - Distinct & Fresh */}
+                        {renderSection(`後天 (${dayAfterStr})`, grouped.dayAfter, "fa-forward", "bg-lime-600/25 border-lime-500/50 text-lime-100")}
+                        
+                        {grouped.others.length > 0 && (
+                            <div className="mt-4 pt-3 border-t border-white/10">
+                                <div className="text-[9px] font-bold text-slate-500 mb-2 px-1">其他 / 待確認</div>
+                                <div className="space-y-1">
+                                    {grouped.others.map((item, idx) => (
+                                        <div key={idx} className="text-[10px] text-slate-400 p-1.5 bg-white/5 rounded break-all">
+                                            {item.isParsed ? `${item.date} ${item.time} ${item.content}` : item.text}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+ 
         // MainDisplay Component
-        function MainDisplay({ now, status, broadcast, calendarEvents, isRefreshing, onRefreshCalendar, onCloseBroadcast }) {
+        function MainDisplay({ now, status, broadcast, onCloseBroadcast, photos }) {
           const minguoYear = now.getFullYear() - 1911;
           const dateStr = `民國${minguoYear}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日 ${DAYS_ZH[now.getDay()]}`;
           const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
-
+ 
           if (broadcast) {
             return (
-              <div className="flex flex-col items-center animate-in zoom-in duration-500 mt-16 md:mt-52 px-4">
-                <h2 className="text-pink-400 text-xl md:text-3xl font-black uppercase tracking-[0.3em] mb-6 md:mb-12 drop-shadow-lg">
-                  <i className="fas fa-bullhorn mr-2 md:mr-4"></i>
+              <div className="flex flex-col items-center animate-in zoom-in duration-500 mt-52 px-4 relative z-10">
+                <h2 className="text-pink-400 text-3xl font-black uppercase tracking-[0.3em] mb-12 drop-shadow-lg">
+                  <i className="fas fa-bullhorn mr-4"></i>
                   系統廣播中
                 </h2>
-                <div className="text-6xl md:text-[14rem] font-black leading-none text-pastel-cycle text-center drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)]">
+                <div style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-[14rem] font-black leading-none text-center drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)]">
                   {broadcast.title}
                 </div>
-                <div className="text-2xl md:text-6xl text-slate-400 font-medium mt-4 md:mt-8 tracking-widest text-center">
+                <div className="text-6xl text-slate-400 font-medium mt-8 tracking-widest text-center">
                   {broadcast.subtitle}
                 </div>
                 <button 
                   onClick={onCloseBroadcast}
-                  className="mt-12 md:mt-24 px-8 md:px-16 py-4 md:py-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-lg md:text-2xl font-bold transition-all btn-3d"
+                  className="mt-24 px-16 py-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-2xl font-bold transition-all btn-3d"
                 >
                   關閉廣播返回
                 </button>
               </div>
             );
           }
-
+ 
           return (
-            <div className="flex flex-col items-center text-center animate-in fade-in duration-1000 mt-8 md:mt-44 px-4">
-              <div className="mb-3 md:mb-6">
-                <div className="text-4xl md:text-[10rem] font-black leading-tight text-pastel-cycle drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)]">
+            <div className="flex flex-col items-center text-center animate-in fade-in duration-1000 px-4 h-full justify-center pb-20 relative z-10">
+              <div className="mb-6">
+                <div style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-[10rem] font-black leading-tight drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)]">
                   {status.label}
                 </div>
               </div>
-
-              <div className="text-6xl md:text-[18rem] font-mono font-bold tracking-tighter leading-none text-pastel-cycle mb-4 md:mb-8 drop-shadow-[0_30px_60px_rgba(0,0,0,0.7)]">
+ 
+              <div style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-[18rem] font-mono font-bold tracking-tighter leading-none mb-12 drop-shadow-[0_30px_60px_rgba(0,0,0,0.7)]">
                 {timeStr}
               </div>
-
-              <button 
-                onClick={onRefreshCalendar}
-                disabled={isRefreshing}
-                className={`group relative w-full max-w-4xl mb-6 md:mb-12 px-4 md:px-10 py-4 md:py-6 bg-black/20 backdrop-blur-md border border-white/5 rounded-2xl md:rounded-[2.5rem] shadow-inner transition-all duration-300 hover:scale-[1.02] hover:bg-black/30 active:scale-95 cursor-pointer disabled:cursor-wait ${isRefreshing ? 'animate-pulse' : ''}`}
-              >
-                <div className="flex items-center justify-center gap-2 md:gap-4 mb-2 md:mb-3">
-                  <i className={`fas fa-calendar-check ${isRefreshing ? 'fa-spin text-amber-400' : 'text-indigo-400'} text-lg md:text-2xl transition-colors`}></i>
-                  <span className="text-[10px] md:text-xs font-black tracking-[0.3em] md:tracking-[0.5em] text-slate-500 uppercase group-hover:text-slate-300 transition-colors">
-                    {isRefreshing ? '正在同步最新行程...' : '今日、明日與後天行程 (點擊強制更新)'}
-                  </span>
-                </div>
-                <div className="text-sm md:text-3xl font-medium text-slate-200 leading-relaxed tracking-wide whitespace-pre-line text-left md:text-center">
-                  {calendarEvents}
-                </div>
-              </button>
-
-              <div className="text-2xl md:text-5xl text-slate-500 font-light tracking-widest px-4 md:px-12 py-2 md:py-4 bg-white/2 rounded-full border border-white/5">
-                {dateStr}
+ 
+              {/* Photos & Date Container - Revised for Better Mobile Visibility */}
+              <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-10">
+                 {/* 左側照片 - 包含標註文字 */}
+                 {photos[0] && (
+                     <div className="flex flex-col items-center gap-3 order-1 md:order-none">
+                         <div className="w-40 h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] transform rotate-[-3deg] hover:rotate-0 transition-all duration-500">
+                             <img src={photos[0]} className="w-full h-full object-cover" alt="Daily 1" />
+                         </div>
+                         <span className="text-xs text-slate-400 font-mono font-bold tracking-wider uppercase bg-black/30 px-3 py-1 rounded-full border border-white/5">我最新的相片#1</span>
+                     </div>
+                 )}
+ 
+                 <div className="text-2xl md:text-3xl lg:text-5xl text-slate-500 font-light tracking-widest px-8 md:px-12 py-3 md:py-4 bg-white/2 rounded-full border border-white/5 backdrop-blur-sm order-2 md:order-none">
+                    {dateStr}
+                 </div>
+ 
+                 {/* 右側照片 - 包含標註文字 */}
+                 {photos[1] && (
+                     <div className="flex flex-col items-center gap-3 order-3 md:order-none">
+                         <div className="w-40 h-40 md:w-48 md:h-48 lg:w-64 lg:h-64 rounded-2xl overflow-hidden border-2 border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)] transform rotate-[3deg] hover:rotate-0 transition-all duration-500">
+                             <img src={photos[1]} className="w-full h-full object-cover" alt="Daily 2" />
+                         </div>
+                         <span className="text-xs text-slate-400 font-mono font-bold tracking-wider uppercase bg-black/30 px-3 py-1 rounded-full border border-white/5">我最新的相片#2</span>
+                     </div>
+                 )}
               </div>
             </div>
           );
         }
-
-        // Toolbar Component
+ 
+        // Toolbar Component with Hover-to-Reveal Logic
         function Toolbar({ onOpenBroadcast, onOpenSettings, onOpenTravel, onQuickAction }) {
+          const [isVisible, setIsVisible] = useState(false);
           const [isFullScreen, setIsFullScreen] = useState(false);
-
+ 
+          // Handle Mouse Movement to reveal/hide toolbar
           useEffect(() => {
+            const handleMouseMove = (e) => {
+              // Get the threshold (bottom 150px of the screen)
+              const threshold = window.innerHeight - 150;
+              
+              // If mouse is below threshold, show toolbar
+              if (e.clientY > threshold) {
+                setIsVisible(true);
+              } else {
+                setIsVisible(false);
+              }
+            };
+ 
             const handleFullScreenChange = () => {
               setIsFullScreen(!!document.fullscreenElement);
             };
-
+ 
+            window.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('fullscreenchange', handleFullScreenChange);
             document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
             document.addEventListener('mozfullscreenchange', handleFullScreenChange);
             document.addEventListener('MSFullscreenChange', handleFullScreenChange);
-
+ 
             return () => {
+              window.removeEventListener('mousemove', handleMouseMove);
               document.removeEventListener('fullscreenchange', handleFullScreenChange);
               document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
               document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
               document.removeEventListener('MSFullscreenChange', handleFullScreenChange);
             };
           }, []);
-
+ 
           const toggleFullScreen = () => {
             if (!document.fullscreenElement) {
               document.documentElement.requestFullscreen().catch((err) => {
@@ -369,9 +867,13 @@
               }
             }
           };
-
+ 
           return (
-            <div className="p-4 md:p-8 glass-texture border-t border-white/10 relative z-20">
+            <div 
+                className={`p-4 md:p-8 glass-texture border border-white/10 fixed bottom-0 left-0 right-0 z-50 md:mx-10 md:mb-24 md:rounded-[2.5rem] transition-all duration-500 ease-in-out transform ${
+                    isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0 pointer-events-none'
+                }`}
+            >
               {/* 主要按鈕區域 */}
               <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 mb-3 md:mb-0">
                 <button 
@@ -381,7 +883,7 @@
                   <i className="fas fa-bullhorn text-lg md:text-xl"></i>
                   <span className="text-base md:text-lg">自訂廣播</span>
                 </button>
-
+ 
                 <div className="w-full md:w-auto grid grid-cols-2 md:flex gap-2 md:gap-4">
                   <button 
                       onClick={() => onQuickAction("去上課了", "下課才回來")}
@@ -393,7 +895,7 @@
                     </div>
                     <span className="text-[9px] md:text-[10px] opacity-70 font-normal">下課才回來</span>
                   </button>
-
+ 
                   <button 
                       onClick={() => onQuickAction("回家了", "明天才回來")}
                       className="px-4 md:px-6 h-14 md:h-16 bg-gradient-to-b from-orange-500 to-orange-700 rounded-2xl flex flex-col items-center justify-center transition-all btn-3d font-black shadow-orange-900/40"
@@ -404,7 +906,7 @@
                     </div>
                     <span className="text-[9px] md:text-[10px] opacity-70 font-normal">明天才回來</span>
                   </button>
-
+ 
                   <button 
                       onClick={() => onQuickAction("打球去了", "下午才回來")}
                       className="px-4 md:px-6 h-14 md:h-16 bg-gradient-to-b from-emerald-500 to-emerald-700 rounded-2xl flex flex-col items-center justify-center transition-all btn-3d font-black shadow-emerald-900/40"
@@ -415,7 +917,7 @@
                     </div>
                     <span className="text-[9px] md:text-[10px] opacity-70 font-normal">下午才回來</span>
                   </button>
-
+ 
                   <button 
                       onClick={() => onQuickAction("開會去了", "請稍後再來訪")}
                       className="px-4 md:px-6 h-14 md:h-16 bg-gradient-to-b from-violet-500 to-violet-700 rounded-2xl flex flex-col items-center justify-center transition-all btn-3d font-black shadow-violet-900/40"
@@ -427,7 +929,7 @@
                     <span className="text-[9px] md:text-[10px] opacity-70 font-normal">請稍後再來訪</span>
                   </button>
                 </div>
-
+ 
                 <button 
                     onClick={onOpenTravel}
                     className="w-full md:w-auto px-6 md:px-8 h-14 md:h-16 bg-gradient-to-b from-indigo-500 to-indigo-700 rounded-2xl flex items-center justify-center gap-2 md:gap-3 transition-all btn-3d font-black shadow-indigo-900/40 border border-indigo-400/20"
@@ -436,7 +938,7 @@
                   <span className="text-base md:text-lg">出國了</span>
                 </button>
               </div>
-
+ 
               {/* 設定按鈕區域 */}
               <div className="flex items-center justify-center md:justify-end gap-3 md:gap-4 mt-3 md:mt-0 md:absolute md:right-8 md:top-1/2 md:-translate-y-1/2">
                 <button 
@@ -457,16 +959,16 @@
             </div>
           );
         }
-
+ 
         // BroadcastModal Component
         function BroadcastModal({ templates, onUpdateTemplates, onPublish, onClose }) {
           const [activeTab, setActiveTab] = useState(templates[0].id);
           const current = templates.find(t => t.id === activeTab);
-
+ 
           const handleChange = (field, val) => {
             onUpdateTemplates(templates.map(t => t.id === activeTab ? { ...t, [field]: val } : t));
           };
-
+ 
           return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 md:p-4 animate-in fade-in duration-200">
               <div className="bg-white rounded-2xl md:rounded-[2rem] w-full max-w-xl max-h-[90vh] overflow-y-auto text-slate-800 shadow-2xl flex flex-col animate-in slide-in-from-bottom-8 duration-300">
@@ -479,7 +981,7 @@
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
-
+ 
                 <div className="p-4 md:p-8 space-y-4 md:space-y-6">
                   <div className="flex bg-slate-100 p-1 rounded-xl md:rounded-2xl">
                     {templates.map(t => (
@@ -494,7 +996,7 @@
                       </button>
                     ))}
                   </div>
-
+ 
                   <div className="space-y-3 md:space-y-4">
                     <div>
                       <label className="block text-xs md:text-sm font-bold text-slate-400 mb-2">按鈕名稱 <i className="fas fa-pen text-[10px] ml-1"></i></label>
@@ -523,14 +1025,14 @@
                       />
                     </div>
                   </div>
-
+ 
                   <div className="bg-slate-50 rounded-xl md:rounded-2xl p-4 md:p-6 text-center border border-slate-100">
                     <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-2">畫面預覽</p>
                     <div className="text-2xl md:text-3xl font-bold text-slate-800 mb-1">{current.title || '（未輸入）'}</div>
                     <div className="text-xs md:text-sm text-slate-400">{current.subtitle || '（未輸入）'}</div>
                   </div>
                 </div>
-
+ 
                 <div className="p-4 md:p-6 bg-slate-50 border-t flex items-center justify-end gap-3 md:gap-4 sticky bottom-0">
                   <button onClick={onClose} className="px-6 md:px-8 py-2 md:py-3 text-sm md:text-base font-bold text-slate-500 hover:text-slate-700">取消</button>
                   <button 
@@ -544,7 +1046,7 @@
             </div>
           );
         }
-
+ 
         // TravelModal Component
         function TravelModal({ onPublish, onClose }) {
           const travelOptions = [
@@ -554,7 +1056,7 @@
             { name: "美國", icon: "fa-flag-usa" }
           ];
           const [custom, setCustom] = useState("");
-
+ 
           return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-2 md:p-4 animate-in fade-in duration-300">
               <div className="bg-slate-900/95 border border-white/10 rounded-2xl md:rounded-[3rem] w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 md:p-10 shadow-2xl animate-in zoom-in-95">
@@ -567,7 +1069,7 @@
                         <i className="fas fa-times"></i>
                     </button>
                 </div>
-
+ 
                 <div className="grid grid-cols-2 gap-3 md:gap-5 mb-6 md:mb-10">
                     {travelOptions.map(opt => (
                         <button
@@ -580,7 +1082,7 @@
                         </button>
                     ))}
                 </div>
-
+ 
                 <div className="space-y-3 md:space-y-4">
                     <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest px-2 block">或自行輸入目的地</label>
                     <div className="relative flex items-center">
@@ -603,32 +1105,32 @@
             </div>
           );
         }
-
+ 
         // SettingsModal Component
         function SettingsModal({ slots, setSlots, timetable, setTimetable, lastSyncTime, onSync, onClose }) {
           const [activeSection, setActiveSection] = useState('timetable');
           const [isSyncingLocal, setIsSyncingLocal] = useState(false);
           const [isImporting, setIsImporting] = useState(false);
           const fileInputRef = useRef(null);
-
+ 
           const handleTimetableChange = (day, slotId, value) => {
             setTimetable({
               ...timetable,
               [day]: { ...(timetable[day] || {}), [slotId]: value }
             });
           };
-
+ 
           const handleGoogleSync = async () => {
             setIsSyncingLocal(true);
             await onSync();
             setIsSyncingLocal(false);
             setActiveSection('timetable');
           };
-
+ 
           const handleFileChange = async (event) => {
             const file = event.target.files?.[0];
             if (!file) return;
-
+ 
             setIsImporting(true);
             try {
               const arrayBuffer = await file.arrayBuffer();
@@ -637,7 +1139,7 @@
               const firstSheetName = workbook.SheetNames[0];
               const worksheet = workbook.Sheets[firstSheetName];
               const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
+ 
               const newSlots = [];
               const newTimetable = {};
               const dataRows = json.slice(1);
@@ -647,7 +1149,7 @@
                 
                 const slotRaw = String(row[0] || '').replace(/\s/g, '');
                 if (!slotRaw) return;
-
+ 
                 const timeMatch = slotRaw.match(/(\d{1,2}[:：]\d{2})\s*[~～-]\s*(\d{1,2}[:：]\d{2})/);
                 const nameMatch = slotRaw.match(/^[^\d]+/);
                 const slotName = nameMatch ? nameMatch[0] : `第${rowIndex + 1}節`;
@@ -656,7 +1158,7 @@
                 
                 const slotId = (rowIndex + 1).toString();
                 newSlots.push({ id: slotId, name: slotName, start: startTime, end: endTime });
-
+ 
                 for (let day = 0; day < 7; day++) {
                   const subject = row[day + 1];
                   if (subject) {
@@ -665,7 +1167,7 @@
                   }
                 }
               });
-
+ 
               if (newSlots.length > 0) {
                 setSlots(newSlots);
                 setTimetable(newTimetable);
@@ -679,15 +1181,15 @@
               if (fileInputRef.current) fileInputRef.current.value = '';
             }
           };
-
+ 
           const triggerFileInput = () => fileInputRef.current?.click();
-
+ 
           const sections = [
             { id: 'schedule', title: '作息時間表設定', icon: 'fa-clock' },
             { id: 'timetable', title: '課表設定', icon: 'fa-book' },
             { id: 'system', title: '雲端同步與匯入', icon: 'fa-cloud-arrow-down' },
           ];
-
+ 
           return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-200">
               <div className="bg-[#f8fafc] rounded-xl md:rounded-[2rem] w-full max-w-[98vw] lg:max-w-6xl max-h-[95vh] md:max-h-[92vh] text-slate-800 overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-300">
@@ -700,7 +1202,7 @@
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
-
+ 
                 <div className="flex-grow overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-4">
                   {sections.map(sec => (
                     <div key={sec.id} className="bg-white border border-slate-200 rounded-xl md:rounded-2xl overflow-hidden shadow-sm">
@@ -714,7 +1216,7 @@
                         </div>
                         <i className={`fas fa-chevron-${activeSection === sec.id ? 'up' : 'down'} text-slate-300`}></i>
                       </button>
-
+ 
                       {activeSection === sec.id && (
                         <div className="p-3 md:p-8 border-t bg-slate-50/50 animate-in slide-in-from-top-2">
                           {sec.id === 'timetable' && (
@@ -802,7 +1304,7 @@
                                         {isSyncingLocal ? '同步中...' : '立即同步'}
                                     </button>
                                 </div>
-
+ 
                                 <div className="bg-white p-6 md:p-8 rounded-xl md:rounded-[2rem] border border-slate-200 flex flex-col gap-4 md:gap-6 shadow-sm">
                                     <div className="flex items-center gap-4 md:gap-6 flex-1">
                                         <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 rounded-2xl md:rounded-3xl flex items-center justify-center text-slate-600 shadow-inner flex-shrink-0">
@@ -826,7 +1328,7 @@
                     </div>
                   ))}
                 </div>
-
+ 
                 <div className="p-4 md:p-6 bg-white border-t flex items-center justify-end sticky bottom-0">
                   <button onClick={onClose} className="w-full md:w-auto px-12 md:px-16 py-3 md:py-4 text-sm md:text-base bg-[#0f172a] hover:bg-slate-800 text-white font-black rounded-xl md:rounded-2xl shadow-xl transition-all active:scale-95">
                     儲存並關閉
@@ -836,55 +1338,122 @@
             </div>
           );
         }
-
+ 
         // Main App Component
         function App() {
           const [now, setNow] = useState(new Date());
           const [isSyncing, setIsSyncing] = useState(false);
           const [isRefreshingCalendar, setIsRefreshingCalendar] = useState(false);
-          const [calendarEvents, setCalendarEvents] = useState('正在獲取今日校務行事曆...');
+          const [calendarEvents, setCalendarEvents] = useState(''); // 初始化為空字串，等待資料
+          const [photos, setPhotos] = useState([]); // 用於儲存從 webhook 抓取的照片 URL
           
           const isFetchingRef = useRef(false);
-
+ 
           const [slots, setSlots] = useState(() => {
             const saved = localStorage.getItem('slots');
             return saved ? JSON.parse(saved) : DEFAULT_SLOTS;
           });
-
+ 
           const [timetable, setTimetable] = useState(() => {
             const saved = localStorage.getItem('timetable');
             return saved ? JSON.parse(saved) : {};
           });
-
+ 
           const [lastSyncTime, setLastSyncTime] = useState(() => {
             return localStorage.getItem('lastSyncTime') || null;
           });
-
+ 
           const [templates, setTemplates] = useState(() => {
             const saved = localStorage.getItem('templates');
             return saved ? JSON.parse(saved) : DEFAULT_TEMPLATES;
           });
-
+ 
           const [broadcast, setBroadcast] = useState(null);
           const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
           const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
           const [isTravelModalOpen, setIsTravelModalOpen] = useState(false);
           const [showCorsWarning, setShowCorsWarning] = useState(false);
-
+ 
+          // === 使用 drive_images_debug.html 的邏輯抓取照片 ===
+          const fetchPhotos = useCallback(async () => {
+              console.log("🚀 開始抓取照片 (Structured Mode)...");
+ 
+              try {
+                  let response;
+                  try {
+                       response = await fetch(N8N_PHOTO_WEBHOOK_URL);
+                       if (!response.ok) throw new Error("Direct fetch failed");
+                  } catch (e) {
+                       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(N8N_PHOTO_WEBHOOK_URL)}`;
+                       response = await fetch(proxyUrl);
+                  }
+ 
+                  const data = await response.json();
+                  console.log("📦 n8n 回傳資料:", data);
+ 
+                  // === 1. 解析資料結構，找出陣列 ===
+                  let items = [];
+                  if (Array.isArray(data)) {
+                      items = data;
+                  } else if (typeof data === 'object' && data !== null) {
+                      const possibleKeys = ['items', 'data', 'files', 'results', 'images', 'body'];
+                      for (let key of possibleKeys) {
+                          if (data[key] && Array.isArray(data[key])) {
+                              items = data[key];
+                              break;
+                          }
+                      }
+                      if (items.length === 0) {
+                          const values = Object.values(data);
+                          const arrayValue = values.find(v => Array.isArray(v));
+                          if (arrayValue) items = arrayValue;
+                      }
+                      if (items.length === 0 && (data.name || data.webViewLink || data.id)) {
+                          items = [data];
+                      }
+                  }
+ 
+                  // === 2. 提取圖片連結 (Thumbnail優先 > ID > WebView) ===
+                  const extractedUrls = items.map(item => {
+                      let url = item.thumbnailLink;
+                      
+                      if (!url) {
+                          // 嘗試從 ID 或 WebViewLink 提取 ID 來建立縮圖連結
+                          const fileId = item.id || extractFileId(item.webViewLink);
+                          if (fileId) {
+                              url = buildThumbnailUrl(fileId);
+                          }
+                      }
+                      return url;
+                  }).filter(Boolean); // 過濾掉 null/undefined
+ 
+                  console.log("✨ 最終圖片 URL:", extractedUrls);
+ 
+                  if (extractedUrls.length > 0) {
+                      setPhotos(extractedUrls.slice(0, 2));
+                  } else {
+                      console.warn("❌ 未發現可用圖片連結");
+                  }
+ 
+              } catch (e) {
+                  console.error("❌ 抓取流程錯誤:", e);
+              }
+          }, []);
+ 
           const fetchCalendarEvents = useCallback(async () => {
             if (isFetchingRef.current) return;
             
             isFetchingRef.current = true;
             setIsRefreshingCalendar(true);
-            setCalendarEvents("正在同步最新行程...");
-
+ 
             try {
+              // 修改請求內容，強制要求純文字格式與無Markdown
               const response = await fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                   action: "query_calendar", 
-                  query: "請查詢我的行事曆，給我今天、明天與後天的全部行程。輸出的結果請務必包含今日、明日與後天，並適當換行呈現。",
+                  query: "請查詢我的行事曆(含今天、明天、後天)。請回傳純文字列表，每一行格式為：'MM/DD HH:mm 行程內容'。例如 '11/25 09:30 開會'。若無行程請回傳'無'。請勿包含任何Markdown標記或其他解釋性文字。",
                   time: new Date().toISOString() 
                 }),
                 mode: 'cors',
@@ -897,7 +1466,7 @@
               
               const data = await response.json();
               
-              let result = "本日尚無重要行事。";
+              let result = "";
               if (typeof data === 'string') {
                 result = data;
               } else if (Array.isArray(data)) {
@@ -910,19 +1479,13 @@
               setCalendarEvents(result);
             } catch (error) {
               console.error("行事曆獲取失敗:", error);
-              let errorMsg = "目前無法連線至行事曆系統。";
-              if (error.message === "Failed to fetch") {
-                errorMsg = "連連線失敗 (Failed to fetch)。\n請確認 n8n Webhook 是否允許來自此網域的 CORS 請求。";
-              } else {
-                errorMsg = `獲取失敗: ${error.message}`;
-              }
-              setCalendarEvents(errorMsg);
+              setCalendarEvents("無法連線至行事曆系統。");
             } finally {
               setIsRefreshingCalendar(false);
               isFetchingRef.current = false;
             }
           }, []);
-
+ 
           const syncWithGoogleSheet = useCallback(async (silent = false) => {
             setIsSyncing(true);
             try {
@@ -952,7 +1515,7 @@
               const firstSheetName = workbook.SheetNames[0];
               const worksheet = workbook.Sheets[firstSheetName];
               const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
+ 
               const newSlots = [];
               const newTimetable = {};
               const dataRows = json.slice(1);
@@ -961,7 +1524,7 @@
                 if (!row || row.length === 0) return;
                 const slotRaw = String(row[0] || '').replace(/\s/g, '');
                 if (!slotRaw) return;
-
+ 
                 const timeMatch = slotRaw.match(/(\d{1,2}[:：]\d{2})\s*[~～-]\s*(\d{1,2}[:：]\d{2})/);
                 const nameMatch = slotRaw.match(/^[^\d]+/);
                 const slotName = nameMatch ? nameMatch[0] : `第${rowIndex + 1}節`;
@@ -970,7 +1533,7 @@
                 
                 const slotId = (rowIndex + 1).toString();
                 newSlots.push({ id: slotId, name: slotName, start: startTime, end: endTime });
-
+ 
                 for (let day = 0; day < 7; day++) {
                   const subject = row[day + 1];
                   if (subject) {
@@ -979,7 +1542,7 @@
                   }
                 }
               });
-
+ 
               if (newSlots.length > 0) {
                 setSlots(newSlots);
                 setTimetable(newTimetable);
@@ -1018,7 +1581,7 @@
               setIsSyncing(false);
             }
           }, []);
-
+ 
           useEffect(() => {
             // 檢查是否使用 file:// 協議開啟
             if (window.location.protocol === 'file:') {
@@ -1029,8 +1592,9 @@
             
             syncWithGoogleSheet(true);
             fetchCalendarEvents();
+            fetchPhotos(); // 初始載入照片
           }, []);
-
+ 
           useEffect(() => {
             const timer = setInterval(() => {
               const d = new Date();
@@ -1038,12 +1602,13 @@
               
               if (d.getHours() === 3 && d.getMinutes() === 0 && d.getSeconds() === 0) {
                 fetchCalendarEvents();
+                fetchPhotos(); // 每天凌晨 3 點更新照片
               }
             }, 1000);
             
             return () => clearInterval(timer);
-          }, [fetchCalendarEvents]);
-
+          }, [fetchCalendarEvents, fetchPhotos]);
+ 
           useEffect(() => {
             localStorage.setItem('slots', JSON.stringify(slots));
             localStorage.setItem('timetable', JSON.stringify(timetable));
@@ -1052,7 +1617,7 @@
               localStorage.setItem('lastSyncTime', lastSyncTime);
             }
           }, [slots, timetable, templates, lastSyncTime]);
-
+ 
           const getStatus = () => {
             const day = now.getDay();
             const hours = now.getHours().toString().padStart(2, '0');
@@ -1076,19 +1641,23 @@
               isClass: false
             };
           };
-
+ 
           const handleQuickAction = (title, sub) => {
             setBroadcast({ id: Date.now().toString(), btnName: 'Quick', title, subtitle: sub });
           };
-
+ 
           const handleTravelPublish = (dest) => {
             setBroadcast({ id: Date.now().toString(), btnName: 'Travel', title: `我在${dest}`, subtitle: '很快就回來' });
             setIsTravelModalOpen(false);
           };
-
+ 
           return (
             <div className="min-h-screen bg-slate-950 text-white relative font-sans">
-              <BubbleBackground />
+              
+              {/* === 新整合的 混合型背景（Bubble + Three.js + MiniMap） === */}
+              <ErrorBoundary>
+                <UnifiedBackground />
+              </ErrorBoundary>
               
               {isSyncing && (
                 <div className="fixed top-4 right-4 z-[100] bg-blue-600/80 backdrop-blur px-3 md:px-4 py-2 rounded-full text-[10px] md:text-xs font-bold animate-pulse flex items-center gap-2">
@@ -1096,7 +1665,7 @@
                     雲端同步中...
                 </div>
               )}
-
+ 
               {showCorsWarning && (
                 <div className="fixed top-4 left-2 right-2 md:left-1/2 md:right-auto md:-translate-x-1/2 z-[100] md:max-w-2xl">
                   <div className="bg-amber-500/95 backdrop-blur px-4 md:px-6 py-3 rounded-xl md:rounded-2xl shadow-xl border border-amber-400/50 flex items-center gap-3 md:gap-4">
@@ -1116,7 +1685,7 @@
                   </div>
                 </div>
               )}
-
+ 
               {/* 手機版：垂直佈局 */}
               <div className="block md:hidden">
                 <div className="avatar-box p-4">
@@ -1125,32 +1694,38 @@
                       <img src="https://luarnai.github.io/pic/mypic.jpg" alt="Dr. Luarn" className="relative w-24 h-24 rounded-full border-4 border-[#FFD700]/40 shadow-2xl object-cover" />
                   </div>
                 </div>
-
-                <div className="title-area">
-                  <div className="flex flex-col items-center">
-                      <div className="flex items-baseline gap-3 drop-shadow-2xl">
-                          <span className="text-4xl font-black text-white tracking-tighter">欒老師</span>
-                          <span className="text-xl font-light tracking-widest uppercase text-slate-300">Dr. Luarn</span>
-                      </div>
-                      <div className="mt-3 text-xs tracking-[0.8em] text-indigo-400 font-black uppercase border-t border-indigo-500/20 pt-3 w-full text-center">
-                          資訊看板
+ 
+                <div className="title-area w-full mt-4">
+                  <div className="flex flex-col items-center justify-center">
+                      <div className="drop-shadow-2xl text-center flex flex-col items-center gap-3">
+                          <span style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-3xl font-black tracking-widest">
+                            欒老師資訊看板
+                          </span>
                       </div>
                   </div>
                 </div>
-
+ 
                 <main className="relative z-10 flex flex-col min-h-[calc(100vh-300px)]">
                   <div className="flex-grow flex items-start justify-center p-4">
                     <MainDisplay 
                       now={now} 
                       status={getStatus()} 
                       broadcast={broadcast} 
-                      calendarEvents={calendarEvents}
-                      isRefreshing={isRefreshingCalendar}
-                      onRefreshCalendar={fetchCalendarEvents}
                       onCloseBroadcast={() => setBroadcast(null)} 
+                      photos={photos}
                     />
                   </div>
-
+                  
+                  {/* 手機版將行事曆顯示在下方 */}
+                  <div className="px-4 mb-4">
+                    <div className="bg-white/10 rounded-xl p-4">
+                        <h3 className="font-bold mb-2 flex items-center gap-2">
+                           <i className="fas fa-calendar-alt"></i> 近期行程
+                        </h3>
+                        <p className="whitespace-pre-wrap text-sm">{calendarEvents}</p>
+                    </div>
+                  </div>
+ 
                   <Toolbar 
                     onOpenBroadcast={() => setIsBroadcastModalOpen(true)}
                     onOpenSettings={() => setIsSettingsModalOpen(true)}
@@ -1159,41 +1734,39 @@
                   />
                 </main>
               </div>
-
+ 
               {/* 桌面版：原始佈局 */}
               <div className="hidden md:block">
-                <div className="avatar-box absolute top-8 left-10 z-30">
-                  <div className="relative group">
-                      <div className="absolute -inset-1.5 bg-gradient-to-tr from-yellow-600 via-amber-400 to-yellow-200 rounded-full blur-sm opacity-70 group-hover:opacity-100 transition duration-500"></div>
-                      <img src="https://luarnai.github.io/pic/mypic.jpg" alt="Dr. Luarn" className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-[#FFD700]/40 shadow-2xl object-cover" />
+                <div className="title-area absolute top-8 left-8 z-20 flex flex-col items-start pointer-events-none">
+                  <div className="flex flex-col items-start">
+                      {/* 頭像 + 合併後的標題 */}
+                      <div className="flex items-center gap-6 drop-shadow-2xl mb-4 pointer-events-auto">
+                          {/* 頭像 */}
+                          <div className="relative group">
+                              <div className="absolute -inset-1.5 bg-gradient-to-tr from-yellow-600 via-amber-400 to-yellow-200 rounded-full blur-sm opacity-70 group-hover:opacity-100 transition duration-500"></div>
+                              <img src="https://luarnai.github.io/pic/mypic.jpg" alt="Dr. Luarn" className="relative w-32 h-32 rounded-full border-4 border-[#FFD700]/40 shadow-2xl object-cover" />
+                          </div>
+                          
+                          {/* 欒老師資訊看板 */}
+                          <span style={{animation: 'pastel-shift 12s ease-in-out infinite', color: '#ffffff'}} className="text-7xl font-black tracking-tight">
+                            欒老師資訊看板
+                          </span>
+                      </div>
                   </div>
                 </div>
-
-                <div className="title-area absolute top-12 left-0 right-0 z-20 flex flex-col items-center pointer-events-none">
-                  <div className="flex flex-col items-center">
-                      <div className="flex items-baseline gap-4 md:gap-10 drop-shadow-2xl">
-                          <span className="text-5xl md:text-8xl font-black text-white tracking-tighter">欒老師</span>
-                          <span className="text-2xl md:text-6xl font-light tracking-widest uppercase text-slate-300">Dr. Luarn</span>
-                      </div>
-                      <div className="mt-4 md:mt-6 text-base md:text-xl tracking-[1.5em] text-indigo-400 font-black uppercase border-t border-indigo-500/20 pt-4 w-full text-center">
-                          資訊看板
-                      </div>
-                  </div>
-                </div>
-
-                <main className="relative z-10 h-screen flex flex-col">
+ 
+                {/* 增加 pt-32 (padding-top) 將主內容往下推 */}
+                <main className="relative z-10 h-screen flex flex-col lg:ml-52 lg:mr-64 pt-32">
                   <div className="flex-grow flex items-center justify-center p-8">
                     <MainDisplay 
                       now={now} 
                       status={getStatus()} 
                       broadcast={broadcast} 
-                      calendarEvents={calendarEvents}
-                      isRefreshing={isRefreshingCalendar}
-                      onRefreshCalendar={fetchCalendarEvents}
                       onCloseBroadcast={() => setBroadcast(null)} 
+                      photos={photos}
                     />
                   </div>
-
+ 
                   <Toolbar 
                     onOpenBroadcast={() => setIsBroadcastModalOpen(true)}
                     onOpenSettings={() => setIsSettingsModalOpen(true)}
@@ -1201,8 +1774,22 @@
                     onQuickAction={handleQuickAction}
                   />
                 </main>
+                
+                {/* 左側固定課表 - top 下修至 58% */}
+                <TodaySchedule 
+                  slots={slots}
+                  timetable={timetable}
+                  now={now}
+                />
+                
+                {/* 右側固定行事曆 - top 下修至 58% */}
+                <RightSchedule 
+                  events={calendarEvents}
+                  onRefresh={fetchCalendarEvents}
+                  isRefreshing={isRefreshingCalendar}
+                />
               </div>
-
+ 
               {isBroadcastModalOpen && (
                 <BroadcastModal 
                   templates={templates}
@@ -1211,7 +1798,7 @@
                   onClose={() => setIsBroadcastModalOpen(false)}
                 />
               )}
-
+ 
               {isSettingsModalOpen && (
                 <SettingsModal 
                   slots={slots}
@@ -1223,7 +1810,7 @@
                   onClose={() => setIsSettingsModalOpen(false)}
                 />
               )}
-
+ 
               {isTravelModalOpen && (
                 <TravelModal 
                   onPublish={handleTravelPublish}
@@ -1233,13 +1820,16 @@
             </div>
           );
         }
-
-        // Render the app
+ 
+        // Render the app, wrapped in an error boundary so any crash shows a message instead of a black screen
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        root.render(
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
+        );
     </script>
     
-    <!-- Babel Standalone for JSX transformation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </body>
 </html>
